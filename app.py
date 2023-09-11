@@ -194,6 +194,9 @@ class Calculator:
             self.BUILDING_STANDARD = "X"
         elif selected_option == "Nytt":
             self.BUILDING_STANDARD = "Y"
+            
+        if self.building_area == 0:
+            st.stop()
                 
     def __streamlit_area_input(self):
         #c1, c2 = st.columns(2)
@@ -308,8 +311,10 @@ class Calculator:
     def cost_calculation(self):
         # -- investeringskostnader 
         self.geoenergy_investment_cost = self.__rounding_to_int((self.borehole_depth * self.number_of_boreholes) * self.COST_PER_METER) # brønn + graving
-        self.heatpump_cost = self.__rounding_to_int((self.heat_pump_size) * self.COST_HEAT_PUMP_PER_KW) # varmepumpe
-        self.investment_cost = self.geoenergy_investment_cost + self.heatpump_cost + self.waterborne_heat_cost
+        self.heat_pump_cost = self.__rounding_to_int((self.heat_pump_size) * self.COST_HEAT_PUMP_PER_KW) # varmepumpe
+        if self.heat_pump_cost < 100000:
+            self.heat_pump_cost = 100000
+        self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost
 
         # -- driftskostnader
         self.direct_el_operation_cost = (self.dhw_demand + self.space_heating_demand) * self.elprice # kostnad direkte elektrisk
@@ -860,7 +865,7 @@ class Calculator:
                     if self.waterborne_heat_cost > 0:
                         st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
                     st.write(f"- • Energibrønn: {self.__rounding_costs_to_int(self.geoenergy_investment_cost):,} kr".replace(",", " "))
-                    st.write(f"- • Væske-vann-varmepumpe: {self.__rounding_costs_to_int(self.heatpump_cost):,} kr".replace(",", " "))
+                    st.write(f"- • Væske-vann-varmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
                     st.write("")
                     st.write("""**Merk at dette er et estimat. Endelig pris fastsettes av leverandøren.**""")          
                           
