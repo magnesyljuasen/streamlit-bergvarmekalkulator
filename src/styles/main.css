@@ -27,6 +27,9 @@ ul.streamlit-expander {
     padding: 5px;
 }
 
+section[tabindex="0"] {
+  overflow-x: hidden;
+}
 
 hr {
     margin-top: 0px;
