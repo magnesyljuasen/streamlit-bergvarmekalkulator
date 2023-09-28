@@ -41,7 +41,7 @@ class Calculator:
         self.COST_PER_METER = 400
         self.COST_HEAT_PUMP_PER_KW = 12000
         self.PAYMENT_TIME = 30
-        self.INTEREST = 3.0
+        self.INTEREST = 5.0
         self.WATERBORNE_HEAT_CONSTANT = 1300
         
         self.ELPRICE_REGIONS = {
@@ -74,8 +74,8 @@ class Calculator:
             """
             <style>
             [data-testid="collapsedControl"] svg {
-                height: 3rem;
-                width: 3rem;
+                height: 4rem;
+                width: 4rem;
             }
             </style>
             """,
@@ -87,7 +87,7 @@ class Calculator:
             st.session_state.is_expanded = False  
         if 'is_expanded' not in st.session_state:
             st.session_state.is_expanded = True
-        container = st.expander("Inndata", expanded = st.session_state.is_expanded)
+        container = st.expander("Opplysninger om din bolig", expanded = st.session_state.is_expanded)
         with container:
             # -- Input content
             self.__streamlit_calculator_input()
@@ -169,8 +169,8 @@ class Calculator:
         number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem")
         if number.isdigit():
             number = float(number)
-            if number < 100:
-                st.error("Boligareal kan ikke være mindre enn 100 m²")
+            if number < 120:
+                st.error("Boligareal kan ikke være mindre enn 120 m²")
                 st.stop()
             elif number > 500:
                 st.error("Boligareal kan ikke være større enn 500 m²")
@@ -187,12 +187,12 @@ class Calculator:
         #with c2:
         #    st.info("Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
         #with c1:
-        selected_option = selectbox("Velg bygningsstandard", options = ["Eldre", "Nytt"], no_selection_label = "", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
+        selected_option = selectbox("Når ble boligen bygget?", options = ["Før 2007", "Etter 2007"], no_selection_label = "", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
         if selected_option == None:
             st.stop()
-        elif selected_option == "Eldre":
+        elif selected_option == "Før 2007":
             self.BUILDING_STANDARD = "X"
-        elif selected_option == "Nytt":
+        elif selected_option == "Etter 2007":
             self.BUILDING_STANDARD = "Y"
             
         if self.building_area == 0:
@@ -207,14 +207,14 @@ class Calculator:
 
         
     def __streamlit_heat_system_input(self):
-        option_list = ['Gulvvarme', 'Radiator', 'Varmtvann']
+        option_list = ['Gulvvarme', 'Radiator']
         #c1, c2 = st.columns(2)
         #with c1:
         if self.waterborne_heat_cost == 0:
             text = "type"
         else:
             text = "ønsket"
-        selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Type varmegiver bestemmer energieffektiviteten til systemet")
+        selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Hvordan fordeles varmen i boligen din?")
         #with c2:
         #st.info('Type varmegiver bestemmer energieffektiviteten til systemet')
         if len(selected) > 0:
@@ -243,7 +243,7 @@ class Calculator:
         demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
         c1, c2 = st.columns(2)
         with c1:
-            demand_sum_new = st.number_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_sum_old, step = 1000, min_value = 15000, max_value = 100000)
+            demand_sum_new = st.number_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_sum_old, step = 1000, min_value = 13000, max_value = 100000)
         with c2:
             st.info(f"Vi estimerer at din bolig har et årlig varmebehov på ca. {demand_sum_old:,} kWh".replace(",", " "))
         if demand_sum_new == 'None' or demand_sum_new == '':
@@ -564,14 +564,12 @@ class Calculator:
     def __adjust_cop(self):
         space_heating_sum = np.sum(self.space_heating_demand)
         dhw_sum = np.sum(self.dhw_demand)
-        cop_gulvvarme, cop_radiator, cop_varmtvann = 0, 0, 0
+        cop_gulvvarme, cop_radiator, cop_varmtvann = 0, 0, 2.5
         for index, value in enumerate(self.selected_cop_option):
             if value == "Gulvvarme":
                 cop_gulvvarme = 4.0
             elif value == "Radiator":
                 cop_radiator = 3.5
-            elif value == "Varmtvann":
-                cop_varmtvann = 2.5
         dhw = cop_varmtvann * dhw_sum
         if cop_gulvvarme > 0 and cop_radiator > 0:
             space_heating = ((cop_gulvvarme + cop_radiator)/2) * space_heating_sum
@@ -587,7 +585,7 @@ class Calculator:
         else:
             combined_cop = (space_heating + dhw) / (space_heating_sum + dhw_sum)
             
-        self.COMBINED_COP = float(st.number_input("Årsvarmefaktor (SCOP)", value = float(combined_cop), step = 0.1, min_value = 2.0, max_value= 5.0))
+        self.COMBINED_COP = float(st.number_input("Årsvarmefaktor", value = float(combined_cop), step = 0.1, min_value = 2.0, max_value= 5.0))
 
     def __adjust_elprice(self):
         self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
@@ -855,7 +853,6 @@ class Calculator:
             tab1, tab2 = st.tabs(["Direktekjøp", "Lånefinansiert"])
             with tab1:
                 # direktekjøp
-                st.info(" Maksimér din besparelse ved å kjøpe bergvarme etter at installasjonen er fullført.", icon = "💰")
                 __show_metrics(investment = self.investment_cost, short_term_savings = self.short_term_investment, long_term_savings = self.long_term_investment)
                 #st.success(f"Bergvarme sparer deg for  {self.savings_operation_cost_lifetime - self.investment_cost:,} kr etter 20 år! ".replace(",", " "), icon = "💰")
                 with st.expander("Mer om lønnsomhet med bergvarme"): 
@@ -894,7 +891,7 @@ class Calculator:
         self.sizing_results()
         self.environmental_results()
         self.cost_results()
-        st.info("Endre forutsetningene for beregningene ved å trykke på knappen øverst i venstre hjørne.", icon = "ℹ️")
+        st.info("Du kan endre strømpris og andre forutsetninger ved å trykke på knappen øverst i venstre hjørne. ", icon = "ℹ️")
         
     def streamlit_hide_fullscreen_view(self):
         hide_img_fs = '''
