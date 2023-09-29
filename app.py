@@ -564,12 +564,12 @@ class Calculator:
     def __adjust_cop(self):
         space_heating_sum = np.sum(self.space_heating_demand)
         dhw_sum = np.sum(self.dhw_demand)
-        cop_gulvvarme, cop_radiator, cop_varmtvann = 0, 0, 2.5
+        cop_gulvvarme, cop_radiator, cop_varmtvann = 0, 0, 2
         for index, value in enumerate(self.selected_cop_option):
             if value == "Gulvvarme":
                 cop_gulvvarme = 4.0
             elif value == "Radiator":
-                cop_radiator = 3.5
+                cop_radiator = 3
         dhw = cop_varmtvann * dhw_sum
         if cop_gulvvarme > 0 and cop_radiator > 0:
             space_heating = ((cop_gulvvarme + cop_radiator)/2) * space_heating_sum
