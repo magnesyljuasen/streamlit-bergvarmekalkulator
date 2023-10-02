@@ -214,7 +214,7 @@ class Calculator:
             text = "type"
         else:
             text = "ønsket"
-        selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Hvordan fordeles varmen i boligen din?")
+        selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Hvordan fordeles varmen i boligen din?", placeholder="Velg minst ett alternativ")
         #with c2:
         #st.info('Type varmegiver bestemmer energieffektiviteten til systemet')
         if len(selected) > 0:
@@ -564,13 +564,12 @@ class Calculator:
     def __adjust_cop(self):
         space_heating_sum = np.sum(self.space_heating_demand)
         dhw_sum = np.sum(self.dhw_demand)
-        cop_gulvvarme, cop_radiator, cop_varmtvann = 0, 0, 2
+        cop_gulvvarme, cop_radiator, self.DHW_COP = 0, 0, 2
         for index, value in enumerate(self.selected_cop_option):
             if value == "Gulvvarme":
                 cop_gulvvarme = 4.0
             elif value == "Radiator":
-                cop_radiator = 3
-        dhw = cop_varmtvann * dhw_sum
+                cop_radiator = 3.0
         if cop_gulvvarme > 0 and cop_radiator > 0:
             space_heating = ((cop_gulvvarme + cop_radiator)/2) * space_heating_sum
         elif cop_gulvvarme > 0 and cop_radiator == 0:
@@ -578,14 +577,10 @@ class Calculator:
         elif cop_gulvvarme == 0 and cop_radiator > 0:
             space_heating = cop_radiator * space_heating_sum
         
-        if cop_varmtvann == 0:                
-            combined_cop = space_heating / (space_heating_sum)
-        elif cop_varmtvann > 0 and cop_gulvvarme == 0 and cop_radiator == 0:
-            combined_cop = dhw / (dhw_sum)
-        else:
-            combined_cop = (space_heating + dhw) / (space_heating_sum + dhw_sum)
+        combined_cop = (space_heating) / (space_heating_sum)
             
         self.COMBINED_COP = float(st.number_input("Årsvarmefaktor", value = float(combined_cop), step = 0.1, min_value = 2.0, max_value= 5.0))
+        
 
     def __adjust_elprice(self):
         self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
@@ -617,7 +612,7 @@ class Calculator:
         # energy
         thermal_demand = self.dhw_demand + self.space_heating_demand
         self.heat_pump_series = np.where(thermal_demand > self.heat_pump_size, self.heat_pump_size, thermal_demand)
-        self.delivered_from_wells_series = self.heat_pump_series - self.heat_pump_series / self.COMBINED_COP
+        self.delivered_from_wells_series = ((self.heat_pump_series - self.dhw_demand) * (1 - 1/self.COMBINED_COP)) + ((self.dhw_demand) * (1 - 1/self.DHW_COP))
         self.compressor_series = self.heat_pump_series - self.delivered_from_wells_series
         self.peak_series = thermal_demand - self.heat_pump_series
         # ghetool
@@ -646,7 +641,7 @@ class Calculator:
             self.kWh_per_meter = np.sum((self.delivered_from_wells_series)/(self.borehole_depth * self.number_of_boreholes))
             self.W_per_meter = np.max((self.delivered_from_wells_series))/(self.borehole_depth * self.number_of_boreholes) * 1000
             i = i + 1
-        borefield.size(L3_sizing=True, use_constant_Tg = False) + self.GROUNDWATER_TABLE
+        new_depth = borefield.size(L3_sizing=True, use_constant_Tg = False) + self.GROUNDWATER_TABLE
         self.borehole_temperature_arr = borefield.results_peak_heating
             
     def __render_svg_metric(self, svg, text, result):
@@ -871,7 +866,7 @@ class Calculator:
             with tab2:
                 # lån
                 if self.short_term_loan > 0:
-                    st.info("Få redusert strømregning fra første dagen anlegget er i drift med lånefinansiering.", icon = "💸")                    
+                    #st.info("Få redusert strømregning fra første dagen anlegget er i drift med lånefinansiering.", icon = "💸")                    
                     __show_metrics(investment = 0, short_term_savings = self.short_term_loan, long_term_savings = self.long_term_loan, investment_text = "Investeringskostnad (lånefinasiert)")
                     #st.success(f"""Bergvarme sparer deg for {(self.loan_savings_monthly - self.loan_cost_monthly) * 12 * 20:,} kr etter 20 år! """.replace(",", " "), icon = "💰")
                     with st.expander("Mer om lønnsomhet med bergvarme"):                       
@@ -880,7 +875,7 @@ class Calculator:
 
                         st.write(f""" Søylediagrammene viser årlige kostnader til oppvarming hvis investeringen finansieres 
                         av et grønt lån. Her har vi forutsatt at investeringen nedbetales i 
-                        løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} % """)
+                        løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %. """)
                         st.plotly_chart(figure_or_data = self.__plot_costs_loan(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 else:
                     st.warning("Lånefinansiering er ikke lønnsomt med oppgitte forutsetninger. Endre forutsetningene for beregningene ved å trykke på knappen øverst i venstre hjørne.", icon="⚠️")

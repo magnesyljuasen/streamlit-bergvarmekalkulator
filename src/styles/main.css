@@ -8,6 +8,10 @@ a {
     font-weight: 600;
 }
 
+#root > div:nth-child(1) > div.withScreencast > div > div > div > section > div.block-container.st-emotion-cache-1y4p8pa.ea3mdgi4 > div > div > div.st-emotion-cache-xajzzo.eqpbllx0 > ul > li > div.st-am.st-ce.st-cf.st-cg.st-ch > div > div > div > div.st-emotion-cache-ocqkz7.e1f1d6gn4 > div:nth-child(1) > div > div > div:nth-child(1) > div > div.st-emotion-cache-131in6u.e1y5xkzn1 {
+  visibility: hidden;
+}
+
 .stApp a:first-child {
     display: none;
 }
@@ -30,6 +34,7 @@ ul.streamlit-expander {
 section[tabindex="0"] {
   overflow-x: hidden;
 }
+
 
 hr {
     margin-top: 0px;
