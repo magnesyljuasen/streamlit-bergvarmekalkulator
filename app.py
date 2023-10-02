@@ -876,7 +876,7 @@ class Calculator:
 
                         st.write(f""" Søylediagrammene viser årlige kostnader til oppvarming hvis investeringen finansieres 
                         av et grønt lån. Her har vi forutsatt at investeringen nedbetales i 
-                        løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %. """)
+                        løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %. """.replace(".", ","))
                         st.plotly_chart(figure_or_data = self.__plot_costs_loan(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 else:
                     st.warning("Lånefinansiering er ikke lønnsomt med oppgitte forutsetninger. Endre forutsetningene for beregningene ved å trykke på knappen øverst i venstre hjørne.", icon="⚠️")
