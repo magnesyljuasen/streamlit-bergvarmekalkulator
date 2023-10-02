@@ -128,7 +128,7 @@ class Calculator:
          
     
     def __streamlit_address_input(self):
-        def __address_search(searchterm: str):
+        def __address_search(searchterm):
             if not searchterm:
                 return []
             number_of_addresses = 5
@@ -147,7 +147,8 @@ class Calculator:
         selected_adr = st_searchbox(
             __address_search,
             key="address_search",
-            placeholder = "Adresse 🏠"
+            placeholder = "Adresse 🏠",
+            default_options = ["hei", "heisann"]
         )
         if selected_adr != None:
             try:

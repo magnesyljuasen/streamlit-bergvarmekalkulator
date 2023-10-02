@@ -12,6 +12,11 @@ a {
   visibility: hidden;
   }
 
+  #root > div:nth-child(2) > div > div > div > div > div > div > ul > li {
+    visibility: hidden;
+  }
+
+  
 .stApp a:first-child {
     display: none;
 }
