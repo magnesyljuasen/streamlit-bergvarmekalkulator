@@ -144,11 +144,12 @@ class Calculator:
                 )
                 for address in response
             ]
+        
         selected_adr = st_searchbox(
             __address_search,
             key="address_search",
             placeholder = "Adresse 🏠",
-            default_options = ["hei", "heisann"]
+            clear_on_submit = False
         )
         if selected_adr != None:
             try:
