@@ -16,10 +16,14 @@ a {
     visibility: hidden;
   }
 
-  #root > div > div > div {
+  .css-1y0au36-control {
     background-color: red;
   }
-  
+
+  .css-11hdbk {
+    background-color: blue;
+  }
+
 .stApp a:first-child {
     display: none;
 }
