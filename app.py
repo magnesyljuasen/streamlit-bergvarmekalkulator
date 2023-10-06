@@ -188,7 +188,7 @@ class Calculator:
         #with c2:
         #    st.info("Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
         #with c1:
-        selected_option = selectbox("Når ble boligen bygget?", options = ["Før 2007", "Etter 2007"], no_selection_label = "", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
+        selected_option = selectbox("Når ble boligen bygget?", options = ["Før 2007", "Etter 2007"], no_selection_label = "Velg et alternativ", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
         if selected_option == None:
             st.stop()
         elif selected_option == "Før 2007":
@@ -228,7 +228,7 @@ class Calculator:
         #with c2:
         #st.info("Bergvarme krever at boligen har et vannbårent varmesystem")
         #with c1:
-        selected_option = selectbox("Har boligen vannbåren varme?", options = ["Ja", "Nei"], no_selection_label = "", help = "Bergvarme krever at boligen har et vannbårent varmesystem")
+        selected_option = selectbox("Har boligen vannbåren varme?", options = ["Ja", "Nei"], no_selection_label = "Velg et alternativ", help = "Bergvarme krever at boligen har et vannbårent varmesystem")
         if selected_option == None:
             self.waterborne_heat_cost = 0
             state = False
@@ -890,7 +890,7 @@ class Calculator:
         #--
         svg = """<svg width="27" height="35" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <rect width="24" height="24" fill="white"></rect> <path d="M9.5 7L14.5 12L9.5 17" stroke="#000000" stroke-linecap="round" stroke-linejoin="round"></path> </g></svg> """
         b64 = base64.b64encode(svg.encode('utf-8')).decode("utf-8")
-        html = f'<medium> Du kan endre strømpris og andre forutsetninger ved å trykke på <img src="data:image/svg+xml;base64,%s"/> øverst i venstre hjørne. </medium>  <font size="+5">  </font>' % b64
+        html = f'<medium> Du kan endre strømpris og andre forutsetninger ved å trykke på <img src="data:image/svg+xml;base64,%s"/> øverst til venstre. </medium>  <font size="+5">  </font>' % b64
         st.write(html, unsafe_allow_html=True)
         
     def streamlit_hide_fullscreen_view(self):
