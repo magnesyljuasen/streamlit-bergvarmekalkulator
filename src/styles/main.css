@@ -16,6 +16,9 @@ a {
     visibility: hidden;
   }
 
+  #root > div > div > div {
+    background-color: red;
+  }
   
 .stApp a:first-child {
     display: none;
