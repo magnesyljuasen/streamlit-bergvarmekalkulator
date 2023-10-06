@@ -208,20 +208,25 @@ class Calculator:
 
         
     def __streamlit_heat_system_input(self):
-        option_list = ['Gulvvarme', 'Radiator']
+        option_list = ['Gulvvarme', 'Radiator', 'Gulvvarme og radiator']
         #c1, c2 = st.columns(2)
         #with c1:
         if self.waterborne_heat_cost == 0:
             text = "type"
         else:
             text = "ønsket"
-        selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Hvordan fordeles varmen i boligen din?", placeholder="Velg minst ett alternativ")
+        selected = selectbox(f"Velg {text} vannbårent varmesystem", options = option_list, no_selection_label = "Velg et alternativ", help = "Hvordan fordeles varmen i boligen din?")
+        if selected == None:
+            st.stop()
+        else:
+            self.selected_cop_option = selected
+        #selected = st.multiselect(f'1. Velg {text} vannbårent varmesystem', options=option_list, help = "Hvordan fordeles varmen i boligen din?", placeholder="Velg minst ett alternativ")
+        #st.write(selected)
         #with c2:
         #st.info('Type varmegiver bestemmer energieffektiviteten til systemet')
-        if len(selected) > 0:
-            self.selected_cop_option = selected
-        else:
-            st.stop()
+        #if len(selected) > 0: 
+        #else:
+            #st.stop()
                 
     def __streamlit_waterborne_heat_input(self):
         #c1, c2 = st.columns(2)
@@ -566,11 +571,13 @@ class Calculator:
         space_heating_sum = np.sum(self.space_heating_demand)
         dhw_sum = np.sum(self.dhw_demand)
         cop_gulvvarme, cop_radiator, self.DHW_COP = 0, 0, 2
-        for index, value in enumerate(self.selected_cop_option):
-            if value == "Gulvvarme":
-                cop_gulvvarme = 4.0
-            elif value == "Radiator":
-                cop_radiator = 3.0
+        if self.selected_cop_option == "Gulvvarme":
+            cop_gulvvarme = 4.0
+        elif self.selected_cop_option == "Radiator":
+            cop_radiator = 3.0
+        elif self.selected_cop_option == "Gulvvarme og radiator":
+            cop_gulvvarme = 4.0
+            cop_radiator = 3.0
         if cop_gulvvarme > 0 and cop_radiator > 0:
             space_heating = ((cop_gulvvarme + cop_radiator)/2) * space_heating_sum
         elif cop_gulvvarme > 0 and cop_radiator == 0:
