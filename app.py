@@ -245,12 +245,30 @@ class Calculator:
             self.waterborne_heat_cost = 0
             state = True
         return state
+    
+    def __demand_input(self, demand_old):
+        number = st.text_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_old)
+        if number.isdigit():
+            number = float(number)
+            if number < 13000:
+                st.error("Verdien kan ikke være mindre enn 13 000 kWh/år")
+                st.stop()
+            elif number > 100000:
+                st.error("Verdien kan ikke være større enn 100 000 kWh/år")
+                st.stop()
+        elif number == 'None' or number == '':
+            number = 0
+        else:
+            st.error('Input må være et tall')
+            number = 0
+        return number
             
     def __streamlit_demand_input(self):
         demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
         c1, c2 = st.columns(2)
         with c1:
-            demand_sum_new = st.number_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_sum_old, step = 1000, min_value = 13000, max_value = 100000)
+            demand_sum_new = self.__demand_input(demand_old = demand_sum_old)
+            #demand_sum_new = st.number_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_sum_old, step = 1000, min_value = 13000, max_value = 100000)
         with c2:
             st.info(f"Vi estimerer at din bolig trenger {demand_sum_old:,} kWh til oppvarming og varmtvann i året".replace(",", " "))
         if demand_sum_new == 'None' or demand_sum_new == '':
@@ -876,7 +894,7 @@ class Calculator:
                 # lån
                 if self.short_term_loan > 0:
                     #st.info("Få redusert strømregning fra første dagen anlegget er i drift med lånefinansiering.", icon = "💸")                    
-                    __show_metrics(investment = 0, short_term_savings = self.short_term_loan, long_term_savings = self.long_term_loan, investment_text = "Investeringskostnad (lånefinasiert)")
+                    __show_metrics(investment = 0, short_term_savings = self.short_term_loan, long_term_savings = self.long_term_loan, investment_text = "Investeringskostnad (lånefinansiert)")
                     #st.success(f"""Bergvarme sparer deg for {(self.loan_savings_monthly - self.loan_cost_monthly) * 12 * 20:,} kr etter 20 år! """.replace(",", " "), icon = "💰")
                     with st.expander("Mer om lønnsomhet med bergvarme"):                       
                         st.write(f""" Mange banker har begynt å tilby billigere boliglån hvis boligen regnes som miljøvennlig; et såkalt grønt boliglån. 
