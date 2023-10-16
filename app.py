@@ -175,12 +175,12 @@ class Calculator:
                 st.error("For boliger som har mindre enn 120 m² oppvarmet areal er varmebehovet vanligvis så lavt at bergvarme blir uforholdsmessig dyrt.")
                 st.stop()
             elif number > 500:
-                st.error("Boligareal kan ikke være større enn 500 m²")
+                st.error("Boligareal kan ikke være større enn 500 m².")
                 st.stop()
         elif number == 'None' or number == '':
             number = 0
         else:
-            st.error('Input må være et tall')
+            st.error('Input må være et tall.', icon="⚠️")
             number = 0
         return number
     
@@ -246,37 +246,64 @@ class Calculator:
             state = True
         return state
     
-    def __demand_input(self, demand_old):
-        number = st.text_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_old)
+    def __space_heating_input(self, demand_old):
+        number = st.text_input('1. Justere romoppvarmingsbehovet [kWh/år]?', value = demand_old)
         if number.isdigit():
             number = float(number)
             if number < 13000:
-                st.error("Verdien kan ikke være mindre enn 13 000 kWh/år")
+                st.error("Verdien kan ikke være mindre enn 13 000 kWh/år.")
                 st.stop()
             elif number > 100000:
-                st.error("Verdien kan ikke være større enn 100 000 kWh/år")
+                st.error("Verdien kan ikke være større enn 100 000 kWh/år.")
                 st.stop()
-        elif number == 'None' or number == '':
+        elif number == 'None':
             number = 0
+        elif number == '':
+            st.error("Input må være et tall")
+            st.stop()
         else:
             st.error('Input må være et tall')
+            st.stop()
+        return number
+    
+    def __dhw_input(self, demand_old):
+        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old)
+        if number.isdigit():
+            number = float(number)
+            if number < 0:
+                st.error("Verdien kan ikke være mindre enn 0 kWh/år.")
+                st.stop()
+            elif number > 10000:
+                st.error("Verdien kan ikke være større enn 10 000 kWh/år.")
+                st.stop()
+        elif number == 'None':
             number = 0
+        elif number == '':
+            st.error("Input må være et tall")
+            st.stop()
+        else:
+            st.error('Input må være et tall')
+            st.stop()
         return number
             
     def __streamlit_demand_input(self):
         demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
+        dhw_demand_old = self.__rounding_to_int(np.sum(self.dhw_demand))
+        space_heating_demand_old = self.__rounding_to_int(np.sum(self.space_heating_demand))
+        st.info(f"Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et varmtvannsbehov på {dhw_demand_old:,} kWh og et oppvarmingsbehov på {space_heating_demand_old:,} kWh. Du kan justere dette i feltene under.".replace(",", " "), icon="ℹ️")
         c1, c2 = st.columns(2)
         with c1:
-            demand_sum_new = self.__demand_input(demand_old = demand_sum_old)
-            #demand_sum_new = st.number_input('1. Hva er boligens årlige varmebehov? [kWh/år]', value = demand_sum_old, step = 1000, min_value = 13000, max_value = 100000)
+            space_heating_demand_new = self.__space_heating_input(demand_old = space_heating_demand_old)
         with c2:
-            st.info(f"Vi estimerer at din bolig trenger {demand_sum_old:,} kWh til oppvarming og varmtvann i året".replace(",", " "))
-        if demand_sum_new == 'None' or demand_sum_new == '':
-            demand_sum_new = ''
-            st.stop()
-        demand_percentage = demand_sum_new / demand_sum_old
-        self.dhw_demand = (self.dhw_demand * demand_percentage).flatten()
-        self.space_heating_demand = (self.space_heating_demand * demand_percentage).flatten()
+            dhw_demand_new = self.__dhw_input(demand_old = dhw_demand_old)
+        dhw_percentage = dhw_demand_new / dhw_demand_old
+        space_heating_percentage = space_heating_demand_new / space_heating_demand_old
+        self.dhw_demand = (self.dhw_demand * dhw_percentage).flatten()
+        self.space_heating_demand = (self.space_heating_demand * space_heating_percentage).flatten()
+        #
+        if dhw_percentage != 1 or space_heating_percentage != 1:
+            st.info(f"Nytt årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
+
         
     def __get_temperature_data(self):
         # find closest weather station
