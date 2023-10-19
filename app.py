@@ -932,7 +932,7 @@ class Calculator:
                         løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %. """.replace(".", ","))
                         st.plotly_chart(figure_or_data = self.__plot_costs_loan(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 else:
-                    st.warning("Lånefinansiering er ikke lønnsomt med oppgitte forutsetninger. Endre forutsetningene for beregningene ved å trykke på knappen øverst i venstre hjørne.", icon="⚠️")
+                    st.warning("Lånefinansiering er ikke lønnsomt med oppgitte forutsetninger innenfor varmepumpens levetid.", icon="⚠️")
             
             
     def streamlit_results(self):
