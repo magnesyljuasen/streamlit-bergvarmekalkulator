@@ -247,7 +247,7 @@ class Calculator:
         return state
     
     def __space_heating_input(self, demand_old):
-        number = st.text_input('1. Justere romoppvarmingsbehovet [kWh/år]?', value = demand_old)
+        number = st.text_input('1. Justere oppvarmingsbehovet [kWh/år]?', value = demand_old)
         if number.isdigit():
             number = float(number)
             if number < 13000:
