@@ -290,7 +290,7 @@ class Calculator:
         demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
         dhw_demand_old = self.__rounding_to_int(np.sum(self.dhw_demand))
         space_heating_demand_old = self.__rounding_to_int(np.sum(self.space_heating_demand))
-        st.info(f"Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et varmtvannsbehov på {dhw_demand_old:,} kWh og et oppvarmingsbehov på {space_heating_demand_old:,} kWh. Du kan justere dette i feltene under.".replace(",", " "), icon="ℹ️")
+        st.info(f"Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. Du kan justere dette i feltene under.".replace(",", " "), icon="ℹ️")
         c1, c2 = st.columns(2)
         with c1:
             space_heating_demand_new = self.__space_heating_input(demand_old = space_heating_demand_old)
