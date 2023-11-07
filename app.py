@@ -290,8 +290,8 @@ class Calculator:
         demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
         dhw_demand_old = self.__rounding_to_int(np.sum(self.dhw_demand))
         space_heating_demand_old = self.__rounding_to_int(np.sum(self.space_heating_demand))
-        st.info(f" ➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh.".replace(",", " "))
-        st.warning("🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.")
+        st.info(f"➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh.".replace(",", " "))
+        st.info("🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.")
         c1, c2 = st.columns(2)
         with c1:
             space_heating_demand_new = self.__space_heating_input(demand_old = space_heating_demand_old)
