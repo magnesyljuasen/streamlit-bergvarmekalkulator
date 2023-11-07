@@ -104,7 +104,9 @@ class Calculator:
             
     def __streamlit_calculator_input(self):
         st.header("Bergvarmekalkulatoren")
-        st.write(f"Med bergvarmekalkulatoren kan du raskt beregne potensialet for å hente energi fra bakken til din bolig! Start med å skrive inn adresse i søkefeltet under.")
+        st.write("""Med bergvarmekalkulatoren kan du raskt 
+                 beregne potensialet for å hente energi fra bakken 
+                 til din bolig! Start med å skrive inn adresse i søkefeltet under.""")
         self.__streamlit_address_input()
         c1, c2 = st.columns(2)
         with c1:
