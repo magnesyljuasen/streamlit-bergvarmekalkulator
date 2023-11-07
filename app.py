@@ -294,7 +294,7 @@ class Calculator:
                 til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
                 på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
                 """.replace(",", " "))
-        st.info(f"""🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
+        st.info(f"""ⓘ Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
                 areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet
                 ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.
                 """.replace(",", " "))  
