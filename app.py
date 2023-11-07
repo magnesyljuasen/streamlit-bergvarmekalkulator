@@ -473,7 +473,7 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk<br>oppvarming: {self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
 
         fig["data"][0]["showlegend"] = True
@@ -527,7 +527,7 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk<br>oppvarming: {self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
