@@ -291,11 +291,11 @@ class Calculator:
         dhw_demand_old = self.__rounding_to_int_demand(np.sum(self.dhw_demand))
         space_heating_demand_old = self.__rounding_to_int_demand(np.sum(self.space_heating_demand))
         with st.container():
-            st.info(f"""- ➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** 
+            st.info(f"""➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** 
                     til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
                     på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
                     """.replace(",", " "))
-            st.info(f"""- 🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
+            st.info(f"""🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
                     areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet
                     ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.
                     """.replace(",", " "))  
