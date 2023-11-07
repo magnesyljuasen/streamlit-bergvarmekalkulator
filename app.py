@@ -445,12 +445,14 @@ class Calculator:
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_yaxes(
             tickformat=",",
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_layout(separators="* .*")
         return fig
@@ -499,12 +501,14 @@ class Calculator:
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_yaxes(
             tickformat=",",
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_layout(separators="* .*")
         return fig
@@ -551,12 +555,14 @@ class Calculator:
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_yaxes(
             tickformat=",",
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_layout(separators="* .*")
         return fig
@@ -743,7 +749,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#1d3c34"),
-                name=f"Strøm til varmepumpe:<br>{self.__rounding_to_int(np.sum(y_arr_1)):,} kWh/år".replace(
+                name=f"Strøm til<br>varmepumpe:<br>{self.__rounding_to_int(np.sum(y_arr_1)):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -755,7 +761,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#48a23f"),
-                name=f"Levert fra brønner:<br>{self.__rounding_to_int(np.sum(y_arr_2)):,} kWh/år".replace(
+                name=f"Fra brønner:<br>{self.__rounding_to_int(np.sum(y_arr_2)):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -792,11 +798,13 @@ class Calculator:
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_yaxes(
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         return fig
     
@@ -830,11 +838,13 @@ class Calculator:
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         fig.update_yaxes(
             ticks="outside",
             linecolor="black",
             gridcolor="lightgrey",
+            gridwidth=0.3,
         )
         return fig
     
