@@ -465,7 +465,7 @@ class Calculator:
                 y=y_1,
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme (lån) (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme (lån):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Bar(
@@ -473,12 +473,14 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk oppvarming (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming: {self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
 
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
+        fig["data"][0]["showlegend"] = True
         fig.update_layout(
+            legend_title = "Kostnad etter 30 år:",
             legend_title_font=dict(size=16),
             legend_font=dict(size=16),
             autosize=True,
@@ -517,7 +519,7 @@ class Calculator:
                 y=y_1,
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme:<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Bar(
@@ -525,11 +527,12 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk oppvarming (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming: {self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
         fig.update_layout(
+            legend_title = "Kostnad etter 30 år:",
             legend_title_font=dict(size=16),
             legend_font=dict(size=16),
             autosize=True,
