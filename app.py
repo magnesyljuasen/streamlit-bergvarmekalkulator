@@ -216,7 +216,7 @@ class Calculator:
             text = "type"
         else:
             text = "ønsket"
-        selected = selectbox(f"Velg {text} vannbårent varmesystem", options = option_list, no_selection_label = "Velg et alternativ", help = "Hvordan fordeles varmen i boligen din?.")
+        selected = selectbox(f"Velg {text} vannbårent varmesystem", options = option_list, no_selection_label = "Velg et alternativ", help = "Hvordan fordeles varmen i boligen din?")
         if selected == None:
             st.stop()
         else:
@@ -938,7 +938,7 @@ class Calculator:
                     st.write("")
                     st.write("""**Merk at dette er et estimat. Endelig pris fastsettes av leverandøren.**""")    
                     
-                    st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her!</a>', unsafe_allow_html=True)       
+                    st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her.</a>', unsafe_allow_html=True)       
 
                     st.plotly_chart(figure_or_data = self.__plot_costs_investment(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
 
