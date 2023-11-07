@@ -40,7 +40,6 @@ ul.streamlit-expander {
     background-color: transparent;
     border-radius: 25px;
     border: 0.05px solid #005173;
-    padding: 5px;
 }
 
 section[tabindex="0"] {
@@ -135,9 +134,9 @@ div.stButton > button:first-child {
 [data-testid="column"] {
     box-shadow: rgb(0 0 0 / 20%) 0px 2px 1px -1px, rgb(0 0 0 / 14%) 0px 1px 1px 0px, rgb(0 0 0 / 12%) 0px 1px 3px 0px;
     border-radius: 15px;
-    padding: 3% 3% 3% 3%;
+    padding: 2% 1% 2% 1%;
     text-align: center;
-} 
+}
 
 
 /* Style containers */
