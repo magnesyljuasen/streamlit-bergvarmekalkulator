@@ -303,7 +303,7 @@ class Calculator:
         self.space_heating_demand = (self.space_heating_demand * space_heating_percentage).flatten()
         #
         if dhw_percentage != 1 or space_heating_percentage != 1:
-            st.info(f"Revidert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
+            st.info(f"Revidert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand) + np.sum(self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
 
         
     def __get_temperature_data(self):
