@@ -290,8 +290,15 @@ class Calculator:
         demand_sum_old = self.__rounding_to_int_demand(np.sum(self.dhw_demand + self.space_heating_demand))
         dhw_demand_old = self.__rounding_to_int_demand(np.sum(self.dhw_demand))
         space_heating_demand_old = self.__rounding_to_int_demand(np.sum(self.space_heating_demand))
-        st.info(f"➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh.".replace(",", " "))
-        st.info("🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.")
+        with st.container():
+            st.info(f"""- ➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** 
+                    til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
+                    på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
+                    """.replace(",", " "))
+            st.info(f"""- 🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
+                    areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet
+                    ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.
+                    """.replace(",", " "))  
         c1, c2 = st.columns(2)
         with c1:
             space_heating_demand_new = self.__space_heating_input(demand_old = space_heating_demand_old)
@@ -584,7 +591,8 @@ class Calculator:
             legend_font=dict(size=16),
             autosize=True,
             )
-            fig.update_traces(textinfo='percent', textfont_size=16)
+            custom_texttemplate = '%{percent}'.replace(".", ",")
+            fig.update_traces(textinfo='percent', textfont_size=16, texttemplate=custom_texttemplate)
             st.plotly_chart(figure_or_data = fig, use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
         with col2:
             source = pd.DataFrame({"label" : [f'Strøm: {direct_el_emmision:,} kWh/år'.replace(","," ")], "value": [direct_el_emmision]})

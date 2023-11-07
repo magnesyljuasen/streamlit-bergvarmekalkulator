@@ -100,6 +100,11 @@ div.stButton > button:first-child {
   .stAlert>div{
     background-color: white;
     color : #383838;
+    margin: 0;
+    padding-left: 1em;
+    padding-right: 1em;
+    padding-top: 0.2em;
+    padding-bottom: 0.2em;
 }
 
   #root > div:nth-child(1) > div.withScreencast > div > div > div > section > div.block-container.css-1y4p8pa.ea3mdgi4 > div:nth-child(1) > div > div.css-xajzzo.eqpbllx0 > ul > li > div.st-am.st-cd.st-ce.st-cf.st-cg > div > div:nth-child(1) > div > div:nth-child(7) > div:nth-child(1) > div:nth-child(1) > div > div > div > div > div > div > div.st-cj.st-dv.st-dx.st-dy.st-dz.st-b3.st-c5.st-fa.st-ct.st-ch.st-e8.st-fb.st-be.st-fc > div.st-fd.st-dg.st-ct.st-e4.st-e5.st-fe {
