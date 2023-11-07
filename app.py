@@ -267,7 +267,7 @@ class Calculator:
         return number
     
     def __dhw_input(self, demand_old):
-        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Ifølge Enova utgjør varmtvannsforbruket ca. 15% av det årlige strømforbruk, men dette er avhengig av hvor mange personer det er i husholdningen.")
+        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Ifølge Enova utgjør varmtvannsforbruket ca. 15% av det årlige strømforbruket, men dette er avhengig av hvor mange personer det er i husholdningen.")
         if number.isdigit():
             number = float(number)
             if number < 0:
