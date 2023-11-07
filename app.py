@@ -168,7 +168,7 @@ class Calculator:
             st.stop()
             
     def __area_input(self):
-        number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem")
+        number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem.")
         if number.isdigit():
             number = float(number)
             if number < 120:
@@ -189,7 +189,7 @@ class Calculator:
         #with c2:
         #    st.info("Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
         #with c1:
-        selected_option = selectbox("Når ble boligen bygget?", options = ["Før 2007", "Etter 2007"], no_selection_label = "Velg et alternativ", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig")
+        selected_option = selectbox("Når ble boligen bygget?", options = ["Før 2007", "Etter 2007"], no_selection_label = "Velg et alternativ", help = "Bygningsstandard brukes til å anslå oppvarmingsbehovet for din bolig.")
         if selected_option == None:
             st.stop()
         elif selected_option == "Før 2007":
@@ -216,7 +216,7 @@ class Calculator:
             text = "type"
         else:
             text = "ønsket"
-        selected = selectbox(f"Velg {text} vannbårent varmesystem", options = option_list, no_selection_label = "Velg et alternativ", help = "Hvordan fordeles varmen i boligen din?")
+        selected = selectbox(f"Velg {text} vannbårent varmesystem", options = option_list, no_selection_label = "Velg et alternativ", help = "Hvordan fordeles varmen i boligen din?.")
         if selected == None:
             st.stop()
         else:
@@ -234,7 +234,7 @@ class Calculator:
         #with c2:
         #st.info("Bergvarme krever at boligen har et vannbårent varmesystem")
         #with c1:
-        selected_option = selectbox("Har boligen vannbåren varme?", options = ["Ja", "Nei"], no_selection_label = "Velg et alternativ", help = "Bergvarme krever at boligen har et vannbårent varmesystem")
+        selected_option = selectbox("Har boligen vannbåren varme?", options = ["Ja", "Nei"], no_selection_label = "Velg et alternativ", help = "Bergvarme krever at boligen har et vannbårent varmesystem.")
         if selected_option == None:
             self.waterborne_heat_cost = 0
             state = False
@@ -342,9 +342,9 @@ class Calculator:
     def __profet_calculation(self):
         profet_data_df = pd.read_csv('src/data/demand/profet_data.csv', sep = ";")
         space_heating_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_SPACEHEATING"]
-        self.space_heating_demand = self.building_area * np.array(space_heating_series)
+        self.space_heating_demand = (self.building_area * np.array(space_heating_series))
         dhw_heating_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_DHW"]
-        self.dhw_demand = self.building_area * np.array(dhw_heating_series)
+        self.dhw_demand = (self.building_area * np.array(dhw_heating_series))
         electric_demand_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_ELECTRIC"]
         self.electric_demand = self.building_area * np.array(electric_demand_series)
     
@@ -515,7 +515,7 @@ class Calculator:
                 y=y_1,
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme:<br> {self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme:<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Bar(
