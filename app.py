@@ -287,9 +287,9 @@ class Calculator:
         return number
             
     def __streamlit_demand_input(self):
-        demand_sum_old = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
-        dhw_demand_old = self.__rounding_to_int(np.sum(self.dhw_demand))
-        space_heating_demand_old = self.__rounding_to_int(np.sum(self.space_heating_demand))
+        demand_sum_old = self.__rounding_to_int_demand(np.sum(self.dhw_demand + self.space_heating_demand))
+        dhw_demand_old = self.__rounding_to_int_demand(np.sum(self.dhw_demand))
+        space_heating_demand_old = self.__rounding_to_int_demand(np.sum(self.space_heating_demand))
         st.info(f"➭ Vi estimerer at din bolig trenger **{demand_sum_old:,} kWh** til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh.".replace(",", " "))
         st.info("🛈 Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.")
         c1, c2 = st.columns(2)
@@ -465,7 +465,7 @@ class Calculator:
                 y=y_1,
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme (lån):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme (lån) (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Bar(
@@ -473,12 +473,14 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk oppvarming (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
 
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
         fig.update_layout(
+            legend_title_font=dict(size=16),
+            legend_font=dict(size=16),
             autosize=True,
             margin=dict(l=0,r=0,b=10,t=10,pad=0),
             yaxis_title="Oppvarmingskostnader [kr]",
@@ -515,7 +517,7 @@ class Calculator:
                 y=y_1,
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme:<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Bar(
@@ -523,11 +525,13 @@ class Calculator:
                 y=y_2,
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk oppvarming (30 år):<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
         fig.update_layout(
+            legend_title_font=dict(size=16),
+            legend_font=dict(size=16),
             autosize=True,
             margin=dict(l=0,r=0,b=10,t=10,pad=0),
             yaxis_title="Oppvarmingskostnader [kr]",
@@ -555,36 +559,37 @@ class Calculator:
         return fig
         
     def __plot_environmental(self):
-        geoenergy_emission = self.__rounding_to_int(np.sum(self.compressor_series + self.peak_series))
-        direct_el_emmision = self.__rounding_to_int(np.sum(self.dhw_demand + self.space_heating_demand))
-        emission_savings = self.__rounding_to_int(np.sum(self.delivered_from_wells_series))  
+        geoenergy_emission = self.__rounding_to_int_demand(np.sum(self.compressor_series + self.peak_series))
+        direct_el_emmision = self.__rounding_to_int_demand(np.sum(self.dhw_demand + self.space_heating_demand))
+        emission_savings = self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series))  
         col1, col2 = st.columns(2)
         with col1:
-            source = pd.DataFrame({"label" : [f'Strøm: {geoenergy_emission:,} kWh/år'.replace(","," "), f'Fra grunnen: {(direct_el_emmision-geoenergy_emission):,} kWh/år'.replace(","," ")], "value": [geoenergy_emission, emission_savings]})
+            source = pd.DataFrame({"label" : [f'Strøm: {geoenergy_emission:,} kWh/år'.replace(","," "), f'Fra brønner: {(direct_el_emmision-geoenergy_emission):,} kWh/år'.replace(","," ")], "value": [geoenergy_emission, emission_savings]})
             fig = px.pie(source, names='label', values='value', color_discrete_sequence = ['#48a23f', '#a23f47'], hole = 0.4)
             fig.update_layout(
-            margin=dict(l=0,r=0,b=0,t=0,pad=0),
+            margin=dict(t=50, b=50),
+            legend=dict(orientation='h', y=1.3),
             plot_bgcolor="white",
-            legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.01, bgcolor="rgba(0,0,0,0)"),
-            legend_title_text = "Bergvarme"
+            legend_title_text = "Bergvarme",
+            legend_title_font=dict(size=16),
+            legend_font=dict(size=16),
+            autosize=True,
             )
-            fig.update_layout(
-                autosize=True,
-            )
+            fig.update_traces(textinfo='percent', textfont_size=16)
             st.plotly_chart(figure_or_data = fig, use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
         with col2:
             source = pd.DataFrame({"label" : [f'Strøm: {direct_el_emmision:,} kWh/år'.replace(","," ")], "value": [direct_el_emmision]})
             fig = px.pie(source, names='label', values='value', color_discrete_sequence = ['#a23f47'], hole = 0.4)
             fig.update_layout(
-            margin=dict(l=0,r=0,b=0,t=0,pad=0),
+            margin=dict(t=50, b=50),
+            legend=dict(orientation='h', y=1.3),
             plot_bgcolor="white",
-            legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.01, bgcolor="rgba(0,0,0,0)"),
-            legend_title_text = "Direkte elektrisk oppvarming"
+            legend_title_text = "Direkte elektrisk oppvarming",
+            legend_title_font=dict(size=16),
+            legend_font=dict(size=16),
+            autosize=True,
             )
             fig.update_traces(textinfo='none')
-            fig.update_layout(
-                autosize=True,
-            )
             st.plotly_chart(figure_or_data = fig, use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
 
     def streamlit_calculations(self):
@@ -768,6 +773,8 @@ class Calculator:
         fig.update_layout(
         margin=dict(l=50,r=50,b=10,t=10,pad=0),
         yaxis_title="Effekt [kW]",
+        legend_title_font=dict(size=16),
+        legend_font=dict(size=16),
         plot_bgcolor="white",
         legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.01, bgcolor="rgba(0,0,0,0)"),
         barmode="stack",
@@ -830,6 +837,9 @@ class Calculator:
     
     def __rounding_to_int(self, number):
         return math.ceil(round(number, 1))
+    
+    def __rounding_to_int_demand(self, number):
+        return math.ceil(round(number, -1))
     
     def __rounding_to_float(self, number):
         return (round(number, 1))
@@ -895,7 +905,7 @@ class Calculator:
             c1, c2 = st.columns(2)
             with c1:
                 svg = """ <svg width="13" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="614" y="84" width="13" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-614 -84)"><path d="M614.386 99.81 624.228 84.3312C624.464 83.9607 625.036 84.2358 624.89 84.6456L621.224 95.1164C621.14 95.3522 621.32 95.5992 621.572 95.5992L626.3 95.5992C626.603 95.5992 626.777 95.9417 626.597 96.1831L616.458 109.691C616.194 110.039 615.644 109.725 615.823 109.326L619.725 100.456C619.838 100.203 619.63 99.9223 619.355 99.9447L614.74 100.36C614.437 100.388 614.229 100.057 614.392 99.7987Z" stroke="#005173" stroke-width="0.308789" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF"/></g></svg>"""
-                self.__render_svg_metric(svg, "Strømbesparelse", f"{self.__rounding_to_int(np.sum(self.delivered_from_wells_series)):,} kWh/år".replace(',', ' '))
+                self.__render_svg_metric(svg, "Strømbesparelse", f"{self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh/år".replace(',', ' '))
             with c2:
                 svg = """ <svg width="26" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="458" y="120" width="26" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-458 -120)"><path d="M480.21 137.875 480.21 135.438 472.356 129.885 472.356 124.604C472.356 123.548 471.814 122.167 471.001 122.167 470.216 122.167 469.647 123.548 469.647 124.604L469.647 129.885 461.793 135.438 461.793 137.875 469.647 133.948 469.647 139.852 466.939 142.208 466.939 143.833 471.001 142.208 475.064 143.833 475.064 142.208 472.356 139.852 472.356 133.948ZM472 140.261 474.522 142.455 474.522 143.033 471.203 141.706 471.001 141.624 470.8 141.706 467.481 143.033 467.481 142.455 470.003 140.261 470.189 140.099 470.189 133.072 469.403 133.463 462.335 136.999 462.335 135.718 469.96 130.328 470.189 130.166 470.189 124.604C470.189 123.645 470.703 122.708 471.001 122.708 471.341 122.708 471.814 123.664 471.814 124.604L471.814 130.166 472.043 130.328 479.668 135.718 479.668 136.999 472.598 133.463 471.814 133.072 471.814 140.099Z" stroke="#005173" stroke-width="0.270833"/></g></svg>"""
                 self.__render_svg_metric(svg, f"Utslippskutt etter {self.BOREHOLE_SIMULATION_YEARS} år", f"{self.emission_savings_flights:,} sparte flyreiser".replace(',', ' '))
