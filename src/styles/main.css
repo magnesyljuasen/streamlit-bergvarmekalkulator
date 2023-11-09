@@ -12,17 +12,9 @@ a {
   visibility: hidden;
   }
 
-  #root > div:nth-child(2) > div > div > div > div > div > div > ul > li {
-    visibility: hidden;
-  }
-
-  .css-1y0au36-control {
-    background-color: red;
-  }
-
-  .css-11hdbk {
-    background-color: blue;
-  }
+#root > div:nth-child(2) > div > div > div > div > div > div > ul > li {
+  visibility: hidden;
+}
 
 .stApp a:first-child {
     display: none;
@@ -118,6 +110,7 @@ div.stButton > button:first-child {
   #root > div:nth-child(1) > div.withScreencast > div > div > div > section > div.block-container.css-1y4p8pa.ea3mdgi4 > div:nth-child(1) > div > div.css-xajzzo.eqpbllx0 > ul > li > div.st-am.st-cd.st-ce.st-cf.st-cg > div > div:nth-child(1) > div > div:nth-child(5) > div:nth-child(2) > div:nth-child(1) > div > div > div > div > div > div > div.st-cj.st-dr.st-dt.st-du.st-dv.st-b3.st-c5.st-f9.st-ct.st-ch.st-e4.st-fa.st-be.st-fb > div.st-fc.st-dg.st-ct.st-e0.st-e1.st-fd {
     visibility: hidden;
   }
+
   div.stButton > button:hover {
     color: white;
     background-color: #005173;

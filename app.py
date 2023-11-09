@@ -146,7 +146,7 @@ class Calculator:
                 )
                 for address in response
             ]
-        
+        #--
         selected_adr = st_searchbox(
             __address_search,
             key="address_search",
@@ -253,7 +253,7 @@ class Calculator:
         if number.isdigit():
             number = float(number)
             if number < 13000:
-                st.error("Verdien kan ikke være mindre enn 13 000 kWh/år.")
+                st.error("Hvis reelt oppvarmingsbehov i boligen din er lavt (under 13 000 kWh per år), er bergvarme en mindre lønnsom investering.")
                 st.stop()
             elif number > 100000:
                 st.error("Verdien kan ikke være større enn 100 000 kWh/år.")
@@ -269,7 +269,7 @@ class Calculator:
         return number
     
     def __dhw_input(self, demand_old):
-        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Varmtvannsforbruket utgjør ca. 15% av det årlige strømforbruket, men dette er avhengig av hvor mange personer det er i husholdningen.")
+        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Oppvarming av varmtvann utgjør ca. 15% av årlige strømforbruk, men det avhenger av hvor mange personer som bor i boligen.")
         if number.isdigit():
             number = float(number)
             if number < 0:
@@ -296,10 +296,12 @@ class Calculator:
                 til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
                 på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
                 """.replace(",", " "))
-        st.info(f"""ⓘ Vår beregning av varmebehovet er forenklet og basert på erfaringsverdier for 
-                areal og byggeår i Østlandsklima. Vi anbefaler deg å tilpasse varmebehovet
-                ved å legge inn mest mulig reelle verdier for din bolig i feltene nedenfor.
-                """.replace(",", " "))  
+        st.info(f"""ⓘ Vi beregner varmebehovet på en forenklet måte ut fra erfaringstill 
+                fra østlandsklima. Vi anbefaler deg å legge inn mest mulig reelle verdier 
+                for din bolig, spesielt hvis du bor i et kaldt eller et mildt klima.
+                """.replace(",", " "))
+        st.write("")
+        st.write("")  
         c1, c2 = st.columns(2)
         with c1:
             space_heating_demand_new = self.__space_heating_input(demand_old = space_heating_demand_old)
@@ -311,7 +313,7 @@ class Calculator:
         self.space_heating_demand = (self.space_heating_demand * space_heating_percentage).flatten()
         #
         if dhw_percentage != 1 or space_heating_percentage != 1:
-            st.info(f"Revidert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand) + np.sum(self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
+            st.info(f"Justert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand) + np.sum(self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
 
         
     def __get_temperature_data(self):
@@ -896,8 +898,7 @@ class Calculator:
                 st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et bergvarmeanlegg med 
                 energibrønn og varmepumpe for din bolig. Dybde på energibrønn og størrelse på varmepumpe 
                 beregnes ut ifra et anslått oppvarmingsbehov for boligen din og antakelser om 
-                egenskapene til berggrunnen der du bor. Varmepumpestørrelsen gjelder on/off 
-                og ikke varmepumper med inverterstyrt kompressor.""")
+                egenskapene til berggrunnen der du bor.""")
                 
                 st.plotly_chart(figure_or_data = self.__plot_gshp_delivered(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 
@@ -966,7 +967,7 @@ class Calculator:
                     if self.waterborne_heat_cost > 0:
                         st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
                     st.write(f"- • Energibrønn: {self.__rounding_costs_to_int(self.geoenergy_investment_cost):,} kr".replace(",", " "))
-                    st.write(f"- • Væske-vann-varmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
+                    st.write(f"- • Bergvarmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
                     st.write("")
                     st.write("""**Merk at dette er et estimat. Endelig pris fastsettes av leverandøren.**""")    
                     
