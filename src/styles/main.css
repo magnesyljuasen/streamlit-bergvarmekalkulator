@@ -127,6 +127,9 @@ div.stButton > button:first-child {
     background-color: #005173;
 }
 
+#root > div > div {
+  background-color: #005173;
+}
     
 /* */
 [data-testid="column"] {

@@ -21,6 +21,7 @@ from GHEtool import Borefield, FluidData, GroundData, PipeData
 from plotly import graph_objects as go
 import plotly.express as px
 import datetime
+from streamlit.components.v1 import html
 
 
 class Calculator:
@@ -269,7 +270,7 @@ class Calculator:
         return number
     
     def __dhw_input(self, demand_old):
-        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Oppvarming av varmtvann utgjør ca. 15% av årlige strømforbruk, men det avhenger av hvor mange personer som bor i boligen.")
+        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Oppvarming av varmtvann utgjør ca. 15% av årlig strømforbruk, men det avhenger av hvor mange personer som bor i boligen.")
         if number.isdigit():
             number = float(number)
             if number < 0:
@@ -296,7 +297,7 @@ class Calculator:
                 til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
                 på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
                 """.replace(",", " "))
-        st.info(f"""ⓘ Vi beregner varmebehovet på en forenklet måte ut fra erfaringstill 
+        st.info(f"""ⓘ Vi beregner varmebehovet på en forenklet måte ut fra erfaringstall 
                 fra østlandsklima. Vi anbefaler deg å legge inn mest mulig reelle verdier 
                 for din bolig, spesielt hvis du bor i et kaldt eller et mildt klima.
                 """.replace(",", " "))
