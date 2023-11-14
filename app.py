@@ -317,7 +317,7 @@ class Calculator:
         self.space_heating_demand = (self.space_heating_demand * space_heating_percentage).flatten()
         #
         if dhw_percentage != 1 or space_heating_percentage != 1:
-            st.info(f"Justert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(np.sum(self.dhw_demand) + np.sum(self.space_heating_demand)):,} kWh**.".replace(",", " "), icon="ℹ️")
+            st.info(f"Justert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(space_heating_demand_new + dhw_demand_new):,} kWh**.".replace(",", " "), icon="ℹ️")
 
         
     def __get_temperature_data(self):
@@ -693,7 +693,7 @@ class Calculator:
         
     def __adjust_heat_pump_size(self):
         thermal_demand = self.dhw_demand + self.space_heating_demand
-        self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(np.max(thermal_demand)*0.8), min_value = 1, max_value = self.__rounding_to_int(np.max(thermal_demand)))
+        self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(np.max(thermal_demand)*0.8), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(np.max(thermal_demand)))
         
         
     def borehole_calculation(self):
