@@ -473,7 +473,7 @@ class Calculator:
         y_1 = (np.sum(self.geoenergy_operation_cost) + (self.loan_cost_monthly * 12)) * np.array(x)
         y_2 = np.sum(self.direct_el_operation_cost) * np.array(x)
         fig = go.Figure(data = [
-            go.Bar(
+            go.Line(
                 x=x,
                 y=y_1,
                 hoverinfo='skip',
@@ -481,7 +481,7 @@ class Calculator:
                 name=f"Bergvarme (lån):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
-            go.Bar(
+            go.Line(
                 x=x,
                 y=y_2,
                 hoverinfo='skip',
@@ -529,7 +529,7 @@ class Calculator:
         y_1 = np.sum(self.geoenergy_operation_cost) * np.array(x) + self.investment_cost
         y_2 = np.sum(self.direct_el_operation_cost) * np.array(x)
         fig = go.Figure(data = [
-            go.Bar(
+            go.Line(
                 x=x,
                 y=y_1,
                 hoverinfo='skip',
@@ -537,7 +537,7 @@ class Calculator:
                 name=f"Bergvarme:<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
-            go.Bar(
+            go.Line(
                 x=x,
                 y=y_2,
                 hoverinfo='skip',
@@ -935,7 +935,7 @@ class Calculator:
                 self.__render_svg_metric(svg, f"Utslippskutt etter {self.BOREHOLE_SIMULATION_YEARS} år", f"{self.emission_savings_flights:,} sparte flyreiser".replace(',', ' '))
             with st.expander("Mer om strømsparing og utslippskutt"):
                 st.write(f""" Vi har beregnet hvor mye strøm bergvarme vil spare i din bolig sammenlignet med å bruke elektrisk oppvarming.
-                Figurene viser at du sparer {self.__rounding_to_int(np.sum(self.delivered_from_wells_series)):,} kWh i året med bergvarme. 
+                Figurene viser at du sparer {self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh i året med bergvarme. 
                 Hvis vi tar utgangspunkt i en {self.selected_emission_constant.lower()} strømmiks
                 vil du i løpet av {self.BOREHOLE_SIMULATION_YEARS} år spare {self.emission_savings} tonn CO\u2082. Dette tilsvarer **{self.emission_savings_flights} flyreiser** mellom Oslo og Trondheim. """.replace(',', ' '))
 
