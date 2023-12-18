@@ -363,7 +363,8 @@ class Calculator:
         self.emission_savings_flights = self.__rounding_to_int(self.emission_savings/(90/1000))
 
     def cost_calculation(self):
-        # -- investeringskostnader 
+        # -- investeringskostnader
+        st.write(self.number_of_boreholes) 
         self.geoenergy_investment_cost = self.__rounding_to_int((self.borehole_depth * self.number_of_boreholes) * self.COST_PER_METER) # brønn + graving
         self.heat_pump_cost = self.__rounding_to_int((self.heat_pump_size) * self.COST_HEAT_PUMP_PER_KW) # varmepumpe
         if self.heat_pump_cost < 100000:
