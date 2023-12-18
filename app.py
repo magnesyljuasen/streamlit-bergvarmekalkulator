@@ -22,31 +22,20 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
-import logging
+#import logging
 
-# Configure the logging module
-logging.basicConfig(level=logging.INFO)  # Set the logging level
-
-# Create a Streamlit logger to capture logs in the app
-logger = logging.getLogger(__name__)
-
-# Define the log file path
-log_file_path = "app_logs.log"
-
-# Create a FileHandler to save logs to a file
-file_handler = logging.FileHandler(log_file_path)
-file_handler.setLevel(logging.INFO)  # Set the file handler logging level
-
-# Define the log format for the file handler
-file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-file_handler.setFormatter(file_formatter)
-
-# Add the FileHandler to the logger
-logger.addHandler(file_handler)
+#logging.basicConfig(level=logging.INFO) 
+#logger = logging.getLogger(__name__)
+#log_file_path = "app_logs.log"
+#file_handler = logging.FileHandler(log_file_path)
+#file_handler.setLevel(logging.INFO)  
+#file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+#file_handler.setFormatter(file_formatter)
+#logger.addHandler(file_handler)
 
 class Calculator:
     def __init__(self):
-        logger.info("Ny inntasting")
+        #logger.info("Ny inntasting")
         self.THERMAL_CONDUCTIVITY = 3.5
         self.GROUNDWATER_TABLE = 5
         self.DEPTH_TO_BEDROCK = 10
@@ -182,6 +171,7 @@ class Calculator:
             self.address_lat = float(selected_adr[1])
             self.address_long = float(selected_adr[2])
             self.address_postcode = selected_adr[3]
+            st.write(self.address_postcode)
         else:
             #st_lottie("src/csv/house.json")
             #image = Image.open('src/data/figures/Ordinary day-amico.png')
