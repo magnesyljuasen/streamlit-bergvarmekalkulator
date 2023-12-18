@@ -39,11 +39,9 @@ class Calculator:
         self.EFFECT_COVERAGE = 85
 
         self.MAXIMUM_DEPTH = 300
-        self.COST_PER_METER = 400
         self.COST_HEAT_PUMP_PER_KW = 12000
         self.PAYMENT_TIME = 30
         self.INTEREST = 5.0
-        self.WATERBORNE_HEAT_CONSTANT = 1300
         
         self.ELPRICE_REGIONS = {
         'NO 1': 'Sørøst-Norge (NO1)',
@@ -231,7 +229,7 @@ class Calculator:
             self.waterborne_heat_cost = 0
             state = False
         elif selected_option == "Nei":
-            self.waterborne_heat_cost = self.__rounding_to_int(self.WATERBORNE_HEAT_CONSTANT * self.building_area)
+            self.waterborne_heat_cost = self.__rounding_to_int(20000 + 815 * self.building_area)
             state = True
         elif selected_option == "Ja":
             self.waterborne_heat_cost = 0
@@ -364,11 +362,8 @@ class Calculator:
 
     def cost_calculation(self):
         # -- investeringskostnader
-        st.write(self.number_of_boreholes) 
-        self.geoenergy_investment_cost = self.__rounding_to_int((self.borehole_depth * self.number_of_boreholes) * self.COST_PER_METER) # brønn + graving
-        self.heat_pump_cost = self.__rounding_to_int((self.heat_pump_size) * self.COST_HEAT_PUMP_PER_KW) # varmepumpe
-        if self.heat_pump_cost < 100000:
-            self.heat_pump_cost = 100000
+        self.geoenergy_investment_cost = self.__rounding_to_int(20000 + (self.borehole_depth * self.number_of_boreholes) * 350) # brønn + graving
+        self.heat_pump_cost = self.__rounding_to_int(214000 + (self.heat_pump_size) * 2200) # varmepumpe
         self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost
         # -- driftskostnader
         self.direct_el_operation_cost = (self.dhw_demand + self.space_heating_demand) * self.elprice # kostnad direkte elektrisk
@@ -596,10 +591,39 @@ class Calculator:
         
     def __adjust_interest(self):
         self.INTEREST = st.number_input("Lånerente [%]", min_value = 0.0, value = self.INTEREST, max_value = 10.0, step = 0.1)
-        
+    
+    def __dekningsgrad_calculation(self, dekningsgrad, timeserie):
+        if dekningsgrad == 100:
+            return timeserie
+        timeserie_sortert = np.sort(timeserie)
+        timeserie_sum = np.sum(timeserie)
+        timeserie_N = len(timeserie)
+        startpunkt = timeserie_N // 2
+        i = 0
+        avvik = 0.0001
+        pm = 2 + avvik
+        while abs(pm - 1) > avvik:
+            cutoff = timeserie_sortert[startpunkt]
+            timeserie_tmp = np.where(timeserie > cutoff, cutoff, timeserie)
+            beregnet_dekningsgrad = (np.sum(timeserie_tmp) / timeserie_sum) * 100
+            pm = beregnet_dekningsgrad / dekningsgrad
+            gammelt_startpunkt = startpunkt
+            if pm < 1:
+                startpunkt = startpunkt + timeserie_N // 2 ** (i + 2) - 1
+            else:
+                startpunkt = startpunkt - timeserie_N // 2 ** (i + 2) - 1
+            if startpunkt == gammelt_startpunkt:
+                break
+            i += 1
+            if i > 13:
+                break
+        return timeserie_tmp
+    
     def __adjust_heat_pump_size(self):
         thermal_demand = self.dhw_demand + self.space_heating_demand
-        self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(np.max(thermal_demand)*0.8), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(np.max(thermal_demand)))
+        heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = 98, timeserie = thermal_demand)
+        heat_pump_size = np.max(heat_pump_series)
+        self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(heat_pump_size), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(heat_pump_size))
         
     def borehole_calculation(self):
         # energy
@@ -802,7 +826,7 @@ class Calculator:
             with column_2:
                 if self.__rounding_to_int(np.max(self.peak_series)) != 0:
                     svg = """<svg width="31" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="395" y="267" width="31" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-395 -267)"><path d="M24.3005 0.230906 28.8817 0.230906 28.8817 25.7691 24.3005 25.7691Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#F0F3E3" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 2.48455 1.40391 25.5936 6.41918 25.5936 6.41918 2.48455C4.70124 1.49627 3.02948 1.44085 1.40391 2.48455Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 25.7691 1.23766 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 0.230906 6.59467 0.230906 6.59467 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 17.6874 6.59467 17.6874" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 8.33108 6.59467 8.33108" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 12.4874 10.1691 12.4874 10.1691 14.0114 11.222 14.7133 11.222 16.108 10.2153 16.8007 9.71652 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 12.4874 9.26394 12.4874 9.26394 14.0114 8.22025 14.7133 8.22025 16.108 9.21776 16.8007 9.72575 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 14.7226 12.4874 14.7226 14.0114 15.7663 14.7133 15.7663 16.108 14.7687 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 13.8174 12.4874 13.8174 14.0114 12.7645 14.7133 12.7645 16.108 13.7712 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 5.90195 0.230906 5.90195 0.230906 10.9542 1.40391 10.9542" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 13.0046 0.230906 13.0046 0.230906 25.0025 1.40391 25.0025" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M28.0412 4.58117 25.2611 4.58117 25.2611 2.73393 25.2611 2.10586 28.0412 2.10586 28.0412 4.58117Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 2.73393 28.0412 2.73393" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.34352 28.0412 3.34352" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.95311 28.0412 3.95311" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 20.6799 10.1691 20.6799 10.1691 22.2131 11.222 22.9059 11.222 24.3005 10.2153 25.0025 9.71652 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 20.6799 9.26394 20.6799 9.26394 22.2131 8.22025 22.9059 8.22025 24.3005 9.21776 25.0025 9.72575 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 14.7226 20.6799 14.7226 22.2131 15.7663 22.9059 15.7663 24.3005 14.7687 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 13.8174 20.6799 13.8174 22.2131 12.7645 22.9059 12.7645 24.3005 13.7712 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 1.05293 23.4139 1.05293 23.4139 7.56448 20.0149 7.56448Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M17.9552 13.0046 23.4046 13.0046 23.4046 15.5538 17.9552 15.5538Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M19.0913 11.6931C19.0913 11.9073 18.9176 12.081 18.7034 12.081 18.4891 12.081 18.3155 11.9073 18.3155 11.6931 18.3155 11.4788 18.4891 11.3052 18.7034 11.3052 18.9176 11.3052 19.0913 11.4788 19.0913 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M18.7034 13.0046 18.7034 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.4028 11.6931C20.4028 11.9073 20.2292 12.081 20.0149 12.081 19.8007 12.081 19.627 11.9073 19.627 11.6931 19.627 11.4788 19.8007 11.3052 20.0149 11.3052 20.2292 11.3052 20.4028 11.4788 20.4028 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 13.0046 20.0149 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.7421 11.6931C21.7421 11.9073 21.5684 12.081 21.3542 12.081 21.1399 12.081 20.9663 11.9073 20.9663 11.6931 20.9663 11.4788 21.1399 11.3052 21.3542 11.3052 21.5684 11.3052 21.7421 11.4788 21.7421 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.3542 13.0046 21.3542 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M23.0536 11.6931C23.0536 11.9073 22.88 12.081 22.6657 12.081 22.4515 12.081 22.2778 11.9073 22.2778 11.6931 22.2778 11.4788 22.4515 11.3052 22.6657 11.3052 22.88 11.3052 23.0536 11.4788 23.0536 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M22.6657 13.0046 22.6657 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/></g></svg>"""
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW <small>(+ {self.__rounding_to_int(np.max(self.peak_series))} kW spisslast)</small>")
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW <small>(+ {self.__rounding_to_int(np.sum(self.peak_series))} kWh spisslast)</small>")
                 else:
                     self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
             
