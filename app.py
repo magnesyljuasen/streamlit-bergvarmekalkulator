@@ -22,10 +22,31 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
+import logging
 
+# Configure the logging module
+logging.basicConfig(level=logging.INFO)  # Set the logging level
+
+# Create a Streamlit logger to capture logs in the app
+logger = logging.getLogger(__name__)
+
+# Define the log file path
+log_file_path = "app_logs.log"
+
+# Create a FileHandler to save logs to a file
+file_handler = logging.FileHandler(log_file_path)
+file_handler.setLevel(logging.INFO)  # Set the file handler logging level
+
+# Define the log format for the file handler
+file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+file_handler.setFormatter(file_formatter)
+
+# Add the FileHandler to the logger
+logger.addHandler(file_handler)
 
 class Calculator:
     def __init__(self):
+        logger.info("Ny inntasting")
         self.THERMAL_CONDUCTIVITY = 3.5
         self.GROUNDWATER_TABLE = 5
         self.DEPTH_TO_BEDROCK = 10
