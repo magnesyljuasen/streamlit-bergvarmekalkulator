@@ -171,7 +171,6 @@ class Calculator:
             self.address_lat = float(selected_adr[1])
             self.address_long = float(selected_adr[2])
             self.address_postcode = selected_adr[3]
-            st.write(self.address_postcode)
         else:
             #st_lottie("src/csv/house.json")
             #image = Image.open('src/data/figures/Ordinary day-amico.png')
