@@ -36,8 +36,8 @@ from streamlit.components.v1 import html
 class Calculator:
     def __init__(self):
         #logger.info("Ny inntasting")
-        self.THERMAL_CONDUCTIVITY = 3.5
-        self.GROUNDWATER_TABLE = 5
+        self.THERMAL_CONDUCTIVITY = 3.0
+        self.GROUNDWATER_TABLE = 10
         self.DEPTH_TO_BEDROCK = 10
         self.BUILDING_TYPE = "A"
         self.BUILDING_STANDARD = "X"
@@ -151,7 +151,7 @@ class Calculator:
             return [
                 (
                     f"{address['adressetekst']}, {address['poststed'].capitalize()}",
-                    [f"{address['adressetekst']}, {address['poststed']}",f"{address['representasjonspunkt']['lat']}", f"{address['representasjonspunkt']['lon']}", f"{address['postnummer']}"]
+                    [f"{address['adressetekst']}, {address['poststed']}",f"{address['representasjonspunkt']['lat']}", f"{address['representasjonspunkt']['lon']}", f"{address['postnummer']}", f"{address['kommunenavn']}"]
                 )
                 for address in response
             ]
@@ -171,6 +171,7 @@ class Calculator:
             self.address_lat = float(selected_adr[1])
             self.address_long = float(selected_adr[2])
             self.address_postcode = selected_adr[3]
+            self.kommunenavn = selected_adr[4].capitalize()
         else:
             #st_lottie("src/csv/house.json")
             #image = Image.open('src/data/figures/Ordinary day-amico.png')
@@ -348,8 +349,36 @@ class Calculator:
             if polygon.contains(Point(self.address_long, self.address_lat)):
                 region = feature['properties']['ElSpotOmr']
         self.elprice_region = self.ELPRICE_REGIONS[region]
+
+    def __find_municipality_temperatures(self):
+        municipality_name = self.kommunenavn
+        df = pd.read_excel("src/csv/temperaturer_kommuner.xlsx")
+        df_kommune = df[df['Kommune'] == municipality_name].reset_index(drop = True)
+        df_oslo = df[df['Kommune'] == "Oslo"].reset_index(drop = True)
+            
+        graddag_oslo = float(df_oslo['Graddagstall'].iloc[0])
+        dut_oslo = float(df_oslo['DUTv'].iloc[0])
+        if len(df_kommune) > 0:
+            graddag_kommune = float(df_kommune['Graddagstall'].iloc[0])
+            dut_kommune = float(df_kommune['DUTv'].iloc[0])
+        else:
+            graddag_kommune = graddag_oslo
+            dut_kommune = dut_oslo
+        return graddag_oslo, graddag_kommune, dut_kommune
+
+    def __effect_calculation(self, energy_demand, dut, graddagstall):
+        Q = energy_demand
+        T_in = 23
+        k = 5
+        DUTv = dut
+        G_year = graddagstall
+        effect = (Q * (T_in + k - DUTv))/(G_year * 24)
+        return effect
         
     def __profet_calculation(self):
+        #--
+        graddag_referanse, graddag_adresse, dut_adresse = self.__find_municipality_temperatures()
+        #--
         profet_data_df = pd.read_csv('src/data/demand/profet_data.csv', sep = ";")
         space_heating_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_SPACEHEATING"]
         self.space_heating_demand = (self.building_area * np.array(space_heating_series))
@@ -357,6 +386,11 @@ class Calculator:
         self.dhw_demand = (self.building_area * np.array(dhw_heating_series))
         electric_demand_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_ELECTRIC"]
         self.electric_demand = self.building_area * np.array(electric_demand_series)
+        #--
+        forholdstall = graddag_adresse/graddag_referanse
+        self.space_heating_demand  = self.space_heating_demand * forholdstall
+        self.dut_effect = self.__rounding_to_int(self.__effect_calculation(energy_demand = np.sum(self.space_heating_demand), dut = dut_adresse, graddagstall = graddag_adresse))
+        #--
     
     def __streamlit_sidebar_settings(self):
         image = Image.open("src/data/figures/bergvarmekalkulatoren_logo_blå.png")
@@ -372,7 +406,7 @@ class Calculator:
 
     def cost_calculation(self):
         # -- investeringskostnader
-        self.geoenergy_investment_cost = self.__rounding_to_int(20000 + (self.borehole_depth * self.number_of_boreholes) * 350) # brønn + graving
+        self.geoenergy_investment_cost = self.__rounding_to_int(20000 + (self.borehole_depth * self.number_of_boreholes) * 437.5) # brønn + graving
         self.heat_pump_cost = self.__rounding_to_int(214000 + (self.heat_pump_size) * 2200) # varmepumpe
         self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost
         # -- driftskostnader
@@ -633,7 +667,8 @@ class Calculator:
         thermal_demand = self.dhw_demand + self.space_heating_demand
         heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = 98, timeserie = thermal_demand)
         heat_pump_size = np.max(heat_pump_series)
-        self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(heat_pump_size), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(heat_pump_size))
+        self.heat_pump_size = self.__rounding_to_int(heat_pump_size)
+        #self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(heat_pump_size), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(heat_pump_size))
         
     def borehole_calculation(self):
         # energy
@@ -643,8 +678,8 @@ class Calculator:
         self.compressor_series = self.heat_pump_series - self.delivered_from_wells_series
         self.peak_series = thermal_demand - self.heat_pump_series
         # ghetool
-        if self.average_temperature < 6:
-            ground_temperature = 6
+        if self.average_temperature < 5:
+            ground_temperature = 5
         elif self.average_temperature > 8:
             ground_temperature = 8
         else:
@@ -836,7 +871,7 @@ class Calculator:
             with column_2:
                 if self.__rounding_to_int(np.max(self.peak_series)) != 0:
                     svg = """<svg width="31" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="395" y="267" width="31" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-395 -267)"><path d="M24.3005 0.230906 28.8817 0.230906 28.8817 25.7691 24.3005 25.7691Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#F0F3E3" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 2.48455 1.40391 25.5936 6.41918 25.5936 6.41918 2.48455C4.70124 1.49627 3.02948 1.44085 1.40391 2.48455Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 25.7691 1.23766 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 0.230906 6.59467 0.230906 6.59467 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 17.6874 6.59467 17.6874" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 8.33108 6.59467 8.33108" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 12.4874 10.1691 12.4874 10.1691 14.0114 11.222 14.7133 11.222 16.108 10.2153 16.8007 9.71652 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 12.4874 9.26394 12.4874 9.26394 14.0114 8.22025 14.7133 8.22025 16.108 9.21776 16.8007 9.72575 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 14.7226 12.4874 14.7226 14.0114 15.7663 14.7133 15.7663 16.108 14.7687 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 13.8174 12.4874 13.8174 14.0114 12.7645 14.7133 12.7645 16.108 13.7712 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 5.90195 0.230906 5.90195 0.230906 10.9542 1.40391 10.9542" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 13.0046 0.230906 13.0046 0.230906 25.0025 1.40391 25.0025" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M28.0412 4.58117 25.2611 4.58117 25.2611 2.73393 25.2611 2.10586 28.0412 2.10586 28.0412 4.58117Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 2.73393 28.0412 2.73393" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.34352 28.0412 3.34352" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.95311 28.0412 3.95311" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 20.6799 10.1691 20.6799 10.1691 22.2131 11.222 22.9059 11.222 24.3005 10.2153 25.0025 9.71652 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 20.6799 9.26394 20.6799 9.26394 22.2131 8.22025 22.9059 8.22025 24.3005 9.21776 25.0025 9.72575 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 14.7226 20.6799 14.7226 22.2131 15.7663 22.9059 15.7663 24.3005 14.7687 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 13.8174 20.6799 13.8174 22.2131 12.7645 22.9059 12.7645 24.3005 13.7712 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 1.05293 23.4139 1.05293 23.4139 7.56448 20.0149 7.56448Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M17.9552 13.0046 23.4046 13.0046 23.4046 15.5538 17.9552 15.5538Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M19.0913 11.6931C19.0913 11.9073 18.9176 12.081 18.7034 12.081 18.4891 12.081 18.3155 11.9073 18.3155 11.6931 18.3155 11.4788 18.4891 11.3052 18.7034 11.3052 18.9176 11.3052 19.0913 11.4788 19.0913 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M18.7034 13.0046 18.7034 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.4028 11.6931C20.4028 11.9073 20.2292 12.081 20.0149 12.081 19.8007 12.081 19.627 11.9073 19.627 11.6931 19.627 11.4788 19.8007 11.3052 20.0149 11.3052 20.2292 11.3052 20.4028 11.4788 20.4028 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 13.0046 20.0149 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.7421 11.6931C21.7421 11.9073 21.5684 12.081 21.3542 12.081 21.1399 12.081 20.9663 11.9073 20.9663 11.6931 20.9663 11.4788 21.1399 11.3052 21.3542 11.3052 21.5684 11.3052 21.7421 11.4788 21.7421 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.3542 13.0046 21.3542 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M23.0536 11.6931C23.0536 11.9073 22.88 12.081 22.6657 12.081 22.4515 12.081 22.2778 11.9073 22.2778 11.6931 22.2778 11.4788 22.4515 11.3052 22.6657 11.3052 22.88 11.3052 23.0536 11.4788 23.0536 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M22.6657 13.0046 22.6657 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/></g></svg>"""
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW <small>(+ {self.__rounding_to_int(np.sum(self.peak_series))} kWh spisslast)</small>")
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
                 else:
                     self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
             
@@ -846,6 +881,7 @@ class Calculator:
                 beregnes ut ifra et anslått oppvarmingsbehov for boligen din og antakelser om 
                 egenskapene til berggrunnen der du bor.""")
                 st.plotly_chart(figure_or_data = self.__plot_gshp_delivered(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+                st.write(f""" Dimensjonerende varmeeffektbehov er {self.dut_effect} kW. Med en varmepumpe på {self.heat_pump_size} kW blir effektdekningsgraden {self.__rounding_to_int((self.heat_pump_size/self.dut_effect) * 100)} %.""")
                 st.write(f""" Hvis uttaket av varme fra energibrønnen ikke er balansert med varmetilførselen i grunnen, 
                         vil temperaturen på bergvarmesystemet synke og energieffektiviteten minke. Det er derfor viktig at energibrønnen er tilstrekkelig dyp
                         til å kunne balansere varmeuttaket. """)
@@ -906,6 +942,8 @@ class Calculator:
                         st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
                     st.write(f"- • Energibrønn: {self.__rounding_costs_to_int(self.geoenergy_investment_cost):,} kr".replace(",", " "))
                     st.write(f"- • Bergvarmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
+                    st.write("")
+                    st.write(""" Alle priser er inkl. mva.""")
                     st.write("")
                     payment_time = math.ceil(-self.investment_cost / ((np.sum(self.geoenergy_operation_cost) - np.sum(self.direct_el_operation_cost))))
                     st.write("""**Merk at dette er et estimat. Endelig pris fastsettes av leverandøren.**""")    
