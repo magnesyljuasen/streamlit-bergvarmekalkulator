@@ -22,20 +22,20 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
-#import logging
+import logging
 
-#logging.basicConfig(level=logging.INFO) 
-#logger = logging.getLogger(__name__)
-#log_file_path = "app_logs.log"
-#file_handler = logging.FileHandler(log_file_path)
-#file_handler.setLevel(logging.INFO)  
-#file_formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-#file_handler.setFormatter(file_formatter)
-#logger.addHandler(file_handler)
+
 
 class Calculator:
     def __init__(self):
-        #logger.info("Ny inntasting")
+        #-- logging
+        logging.basicConfig(
+            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+            level=logging.INFO  
+        )
+        self.logger = logging.getLogger(__name__)
+        self.logger.info("Ny pålogging")
+        #-- logging
         self.THERMAL_CONDUCTIVITY = 3.0
         self.GROUNDWATER_TABLE = 10
         self.DEPTH_TO_BEDROCK = 10
@@ -1015,7 +1015,7 @@ class Calculator:
             # vanlig
             address_str = address_str.replace(" ", "+")
         st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;font-size:2.0rem;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs entreprenør!</a>', unsafe_allow_html=True)       
- 
+            
     def main(self):
         self.set_streamlit_settings()
         self.streamlit_hide_fullscreen_view()
