@@ -22,27 +22,16 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
-import logging
-
-
 
 class Calculator:
     def __init__(self):
-        #-- logging
-        logging.basicConfig(
-            format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            level=logging.INFO  
-        )
-        self.logger = logging.getLogger(__name__)
-        self.logger.info("Ny pålogging")
-        #-- logging
         self.THERMAL_CONDUCTIVITY = 3.0
         self.GROUNDWATER_TABLE = 10
         self.DEPTH_TO_BEDROCK = 10
         self.BUILDING_TYPE = "A"
         self.BUILDING_STANDARD = "X"
         
-        self.MINIMUM_TEMPERATURE = 0
+        self.MINIMUM_TEMPERATURE = -1
         self.BOREHOLE_BURIED_DEPTH = 10
         self.BOREHOLE_RADIUS = (115/1000)/2
         self.BOREHOLE_SIMULATION_YEARS = 30
@@ -298,10 +287,10 @@ class Calculator:
                 til oppvarming og varmtvann i året. Her inngår et oppvarmingsbehov 
                 på {space_heating_demand_old:,} kWh og et varmtvannsbehov på {dhw_demand_old:,} kWh. 
                 """.replace(",", " "))
-        st.info(f"""ⓘ Vi beregner varmebehovet på en forenklet måte ut fra erfaringstall 
-                fra østlandsklima. Vi anbefaler deg å legge inn mest mulig reelle verdier 
-                for din bolig, spesielt hvis du bor i et kaldt eller et mildt klima.
-                """.replace(",", " "))
+        #st.info(f"""ⓘ Vi beregner varmebehovet på en forenklet måte ut fra erfaringstall 
+        #        fra østlandsklima. Vi anbefaler deg å legge inn mest mulig reelle verdier 
+        #        for din bolig, spesielt hvis du bor i et kaldt eller et mildt klima.
+        #        """.replace(",", " "))
         st.write("")
         st.write("")  
         c1, c2 = st.columns(2)
@@ -664,11 +653,12 @@ class Calculator:
         return timeserie_tmp
     
     def __adjust_heat_pump_size(self):
+        dekningsgrad = st.number_input("Energidekningsgrad [%]", value=98, min_value = 90, max_value = 100)
         thermal_demand = self.dhw_demand + self.space_heating_demand
-        heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = 98, timeserie = thermal_demand)
+        heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = dekningsgrad, timeserie = thermal_demand)
         heat_pump_size = np.max(heat_pump_series)
         self.heat_pump_size = self.__rounding_to_int(heat_pump_size)
-        #self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(heat_pump_size), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(heat_pump_size))
+        #self.heat_pump_size = st.number_input("Varmepumpestørrelse [kW]", value=self.__rounding_to_int(heat_pump_size), min_value = self.__rounding_to_int(np.max(thermal_demand)*0.4), max_value = self.__rounding_to_int(np.max(thermal_demand)))
         
     def borehole_calculation(self):
         # energy
@@ -871,9 +861,11 @@ class Calculator:
             with column_2:
                 if self.__rounding_to_int(np.max(self.peak_series)) != 0:
                     svg = """<svg width="31" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="395" y="267" width="31" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-395 -267)"><path d="M24.3005 0.230906 28.8817 0.230906 28.8817 25.7691 24.3005 25.7691Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#F0F3E3" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 2.48455 1.40391 25.5936 6.41918 25.5936 6.41918 2.48455C4.70124 1.49627 3.02948 1.44085 1.40391 2.48455Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 25.7691 1.23766 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 0.230906 6.59467 0.230906 6.59467 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 17.6874 6.59467 17.6874" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 8.33108 6.59467 8.33108" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 12.4874 10.1691 12.4874 10.1691 14.0114 11.222 14.7133 11.222 16.108 10.2153 16.8007 9.71652 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 12.4874 9.26394 12.4874 9.26394 14.0114 8.22025 14.7133 8.22025 16.108 9.21776 16.8007 9.72575 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 14.7226 12.4874 14.7226 14.0114 15.7663 14.7133 15.7663 16.108 14.7687 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 13.8174 12.4874 13.8174 14.0114 12.7645 14.7133 12.7645 16.108 13.7712 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 5.90195 0.230906 5.90195 0.230906 10.9542 1.40391 10.9542" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 13.0046 0.230906 13.0046 0.230906 25.0025 1.40391 25.0025" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M28.0412 4.58117 25.2611 4.58117 25.2611 2.73393 25.2611 2.10586 28.0412 2.10586 28.0412 4.58117Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 2.73393 28.0412 2.73393" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.34352 28.0412 3.34352" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.95311 28.0412 3.95311" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 20.6799 10.1691 20.6799 10.1691 22.2131 11.222 22.9059 11.222 24.3005 10.2153 25.0025 9.71652 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 20.6799 9.26394 20.6799 9.26394 22.2131 8.22025 22.9059 8.22025 24.3005 9.21776 25.0025 9.72575 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 14.7226 20.6799 14.7226 22.2131 15.7663 22.9059 15.7663 24.3005 14.7687 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 13.8174 20.6799 13.8174 22.2131 12.7645 22.9059 12.7645 24.3005 13.7712 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 1.05293 23.4139 1.05293 23.4139 7.56448 20.0149 7.56448Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M17.9552 13.0046 23.4046 13.0046 23.4046 15.5538 17.9552 15.5538Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M19.0913 11.6931C19.0913 11.9073 18.9176 12.081 18.7034 12.081 18.4891 12.081 18.3155 11.9073 18.3155 11.6931 18.3155 11.4788 18.4891 11.3052 18.7034 11.3052 18.9176 11.3052 19.0913 11.4788 19.0913 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M18.7034 13.0046 18.7034 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.4028 11.6931C20.4028 11.9073 20.2292 12.081 20.0149 12.081 19.8007 12.081 19.627 11.9073 19.627 11.6931 19.627 11.4788 19.8007 11.3052 20.0149 11.3052 20.2292 11.3052 20.4028 11.4788 20.4028 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 13.0046 20.0149 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.7421 11.6931C21.7421 11.9073 21.5684 12.081 21.3542 12.081 21.1399 12.081 20.9663 11.9073 20.9663 11.6931 20.9663 11.4788 21.1399 11.3052 21.3542 11.3052 21.5684 11.3052 21.7421 11.4788 21.7421 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.3542 13.0046 21.3542 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M23.0536 11.6931C23.0536 11.9073 22.88 12.081 22.6657 12.081 22.4515 12.081 22.2778 11.9073 22.2778 11.6931 22.2778 11.4788 22.4515 11.3052 22.6657 11.3052 22.88 11.3052 23.0536 11.4788 23.0536 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M22.6657 13.0046 22.6657 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/></g></svg>"""
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
+                    #self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.__rounding_to_int(np.max(self.dhw_demand + self.space_heating_demand))} kW") # juks?
                 else:
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
+                    #self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW") # juks?
             
             with st.expander("Mer om brønndybde og varmepumpestørrelse"):
                 st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et bergvarmeanlegg med 
@@ -936,17 +928,18 @@ class Calculator:
                 # direktekjøp
                 __show_metrics(investment = self.investment_cost, short_term_savings = self.short_term_investment, long_term_savings = self.long_term_investment)
                 with st.expander("Mer om lønnsomhet med bergvarme"): 
-                    st.write(""" Estimert investeringskostnad omfatter en komplett installasjon av et 
-                    bergvarmeanlegg, inkludert energibrønn, varmepumpe og installasjon. Denne er antatt fordelt slik: """)
-                    if self.waterborne_heat_cost > 0:
-                        st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
+                    st.write(""" Estimert investeringskostnad dekker et komplett bergvarmeanlegg, 
+                             inkludert energibrønn, varmepumpe og installasjon. Vi har antatt at kostnadene fordeler seg slik: """)
                     st.write(f"- • Energibrønn: {self.__rounding_costs_to_int(self.geoenergy_investment_cost):,} kr".replace(",", " "))
                     st.write(f"- • Bergvarmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
+                    if self.waterborne_heat_cost > 0:
+                        st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
                     st.write("")
-                    st.write(""" Alle priser er inkl. mva.""")
+                    st.write(""" Prisene er inkludert mva. NB! Dette er et anslag basert på priser 
+                             fra en spørreundersøkelse blant forhandlere høsten 2023. 
+                             Faktiske priser kan variere mye fra sted til sted, og bestemmes av leverandør.""")
                     st.write("")
                     payment_time = math.ceil(-self.investment_cost / ((np.sum(self.geoenergy_operation_cost) - np.sum(self.direct_el_operation_cost))))
-                    st.write("""**Merk at dette er et estimat. Endelig pris fastsettes av leverandøren.**""")    
                     st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her.</a>', unsafe_allow_html=True)     
                     st.write(f"Grafene under viser at anlegget er nedbetalt etter ca. {payment_time} år.")
                     st.plotly_chart(figure_or_data = self.__plot_costs_investment(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
