@@ -5,6 +5,10 @@ secondaryBackgroundColor="#e5ecf2"
 textColor="#383838"
 font="sans serif"
 
+[logger]
+level = "info"
+messageFormat = "%(asctime)s %(message)s"
+
 #[server] 
 #headless = true
 #port = 8501
