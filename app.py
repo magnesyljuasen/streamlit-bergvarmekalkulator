@@ -1016,14 +1016,15 @@ class Calculator:
         st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;font-size:2.0rem;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs entreprenør!</a>', unsafe_allow_html=True)       
             
     def main(self):
-        # logging
+        # initialize logging
         if 'log' not in st.session_state:
             st.session_state['log'] = False
         if st.session_state["log"] == False:
             streamlit_root_logger = logging.getLogger(st.__name__)
             streamlit_root_logger.info("Ny pålogging")
             st.session_state["log"] = True
-        # logging
+        # initialize logging
+            
         self.streamlit_hide_fullscreen_view()
         self.streamlit_input_container()
         self.streamlit_calculations()
