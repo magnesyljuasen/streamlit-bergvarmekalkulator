@@ -22,17 +22,8 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
-from loguru import logger
-
-def get_logger():
-    if 'log' not in st.session_state:
-        st.session_state['log'] = False
-
-    if st.session_state["log"] == False:
-        logger.add("logfile.log")
-        logger.debug("This is a debug message")
-        st.session_state["log"] = True
-    return logger
+#from loguru import logger
+import logging
 
 class Calculator:
     def __init__(self):
@@ -1025,6 +1016,14 @@ class Calculator:
         st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;font-size:2.0rem;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs entreprenør!</a>', unsafe_allow_html=True)       
             
     def main(self):
+        # logging
+        if 'log' not in st.session_state:
+            st.session_state['log'] = False
+        if st.session_state["log"] == False:
+            streamlit_root_logger = logging.getLogger(st.__name__)
+            streamlit_root_logger.info("Ny pålogging")
+            st.session_state["log"] = True
+        # logging
         self.streamlit_hide_fullscreen_view()
         self.streamlit_input_container()
         self.streamlit_calculations()
@@ -1035,6 +1034,4 @@ class Calculator:
         
 if __name__ == '__main__':
     calculator = Calculator()
-    logger = get_logger()
-    #streamlit_root_logger = get_logger()
     calculator.main()
