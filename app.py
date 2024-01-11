@@ -1,29 +1,21 @@
 import streamlit as st
-from PIL import Image
+import numpy as np
+import pandas as pd
+import pygfunction as gt
 import json
 import base64
-import numpy as np
 import requests
+import mpu
+import plotly.express as px
+import math
+import logging
+from PIL import Image
+from GHEtool import Borefield, GroundData 
+from plotly import graph_objects as go
+from PIL import Image
+from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
-from PIL import Image
-import mpu
-import pandas as pd
-from shapely.geometry import Point, shape
-from st_keyup import st_keyup
-import time
-import numpy as np
-from scipy.constants import pi
-import pygfunction as gt
-import altair as alt
-import math
-from GHEtool import Borefield, FluidData, GroundData, PipeData 
-from plotly import graph_objects as go
-import plotly.express as px
-import datetime
-from streamlit.components.v1 import html
-#from loguru import logger
-import logging
 
 class Calculator:
     def __init__(self):
@@ -35,7 +27,7 @@ class Calculator:
         self.BUILDING_TYPE = "A"
         self.BUILDING_STANDARD = "X"
         
-        self.MINIMUM_TEMPERATURE = -1
+        self.MINIMUM_TEMPERATURE = -2
         self.BOREHOLE_BURIED_DEPTH = 10
         self.BOREHOLE_RADIUS = (115/1000)/2
         self.BOREHOLE_SIMULATION_YEARS = 30
@@ -136,7 +128,7 @@ class Calculator:
             if not searchterm:
                 return []
             number_of_addresses = 5
-            r = requests.get(f"https://ws.geonorge.no/adresser/v1/sok?sok={searchterm}&fuzzy=true&treffPerSide={number_of_addresses}&sokemodus=OR", auth=('user', 'pass'))
+            r = requests.get(f"https://ws.geonorge.no/adresser/v1/sok?sok={searchterm}&fuzzy=false&treffPerSide={number_of_addresses}&sokemodus=OR", auth=('user', 'pass'))
             if r.status_code == 200 and len(r.json()["adresser"]) == number_of_addresses:
                 response = r.json()["adresser"]
             else:
