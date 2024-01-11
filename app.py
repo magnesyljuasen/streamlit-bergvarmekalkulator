@@ -658,7 +658,8 @@ class Calculator:
         return timeserie_tmp
     
     def __adjust_heat_pump_size(self):
-        dekningsgrad = st.number_input("Energidekningsgrad [%]", value=98, min_value = 90, max_value = 100)
+        #dekningsgrad = st.number_input("Energidekningsgrad [%]", value=100, min_value = 90, max_value = 100)
+        dekningsgrad = 100
         thermal_demand = self.dhw_demand + self.space_heating_demand
         heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = dekningsgrad, timeserie = thermal_demand)
         heat_pump_size = np.max(heat_pump_series)
