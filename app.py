@@ -22,12 +22,17 @@ from plotly import graph_objects as go
 import plotly.express as px
 import datetime
 from streamlit.components.v1 import html
-import logging
+from loguru import logger
 
-#@st.cache_resource
 def get_logger():
-    streamlit_root_logger = logging.getLogger(st.__name__)
-    return streamlit_root_logger
+    if 'log' not in st.session_state:
+        st.session_state['log'] = False
+
+    if st.session_state["log"] == False:
+        logger.add("logfile.log")
+        logger.debug("This is a debug message")
+        st.session_state["log"] = True
+    return logger
 
 class Calculator:
     def __init__(self):
@@ -170,7 +175,7 @@ class Calculator:
             self.address_postcode = selected_adr[3]
             self.kommunenavn = selected_adr[4].capitalize()
             #--
-            streamlit_root_logger.info = "Adresse fylt inn"
+            #streamlit_root_logger.info = "Adresse fylt inn"
         else:
             #st_lottie("src/csv/house.json")
             #image = Image.open('src/data/figures/Ordinary day-amico.png')
@@ -1030,5 +1035,6 @@ class Calculator:
         
 if __name__ == '__main__':
     calculator = Calculator()
-    streamlit_root_logger = get_logger()
+    logger = get_logger()
+    #streamlit_root_logger = get_logger()
     calculator.main()
