@@ -98,7 +98,7 @@ class Calculator:
             if 'load_state' not in st.session_state:
                 st.session_state.load_state = False
         if start_calculation or st.session_state.load_state:
-            self.progress_bar = st.progress(0)
+            self.progress_bar = st.progress(0, text="Laster inn...")
             st.toast("Beregner ...", icon = "💻")
             st.session_state.load_state = True
         else:
@@ -572,16 +572,15 @@ class Calculator:
         with st.sidebar:
             self.__streamlit_sidebar_settings()
             self.__streamlit_adjust_input()
-        self.progress_bar.progress(33)
         # grunnvarmeberegning
         self.borehole_calculation()
         # stømsparingsberegning
         self.environmental_calculation()
         # kostnadsberegning
         self.cost_calculation() 
+        
 
     def __streamlit_adjust_input(self):
-        self.progress_bar.progress(33)
         with st.form('input'):
             self.__adjust_heat_pump_size()
             self.__adjust_cop()
@@ -689,11 +688,11 @@ class Calculator:
         borefield.set_min_ground_temperature(self.MINIMUM_TEMPERATURE)
         i = 0
         self.borehole_depth = self.MAXIMUM_DEPTH + 1
+        self.progress_bar.progress(50, "Gjør beregninger...")
         while self.borehole_depth >= self.MAXIMUM_DEPTH:
             borefield_gt = gt.boreholes.rectangle_field(N_1 = 1, N_2 = i + 1, B_1 = 15, B_2 = 15, H = 100, D = self.BOREHOLE_BURIED_DEPTH, r_b = self.BOREHOLE_RADIUS)
             borefield.set_borefield(borefield_gt)         
             self.borehole_depth = borefield.size(L4_sizing=True, use_constant_Tg = False) + self.GROUNDWATER_TABLE
-            self.progress_bar.progress(66)
             #self.borehole_temperature_arr = borefield.results_peak_heating
             self.number_of_boreholes = borefield.number_of_boreholes
             self.kWh_per_meter = np.sum((self.delivered_from_wells_series)/(self.borehole_depth * self.number_of_boreholes))
@@ -1016,6 +1015,7 @@ class Calculator:
         st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;font-size:2.0rem;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs entreprenør!</a>', unsafe_allow_html=True)       
             
     def main(self):
+        
         # initialize logging
         if 'log' not in st.session_state:
             st.session_state['log'] = False
@@ -1026,10 +1026,10 @@ class Calculator:
         # initialize logging
             
         self.streamlit_hide_fullscreen_view()
-        self.streamlit_input_container()
+        self.streamlit_input_container() # start progress bar
         self.streamlit_calculations()
         # ferdig
-        self.progress_bar.progress(100)
+        self.progress_bar.progress(100, text="Fullført")
         self.streamlit_results()
         self.novap()
         
