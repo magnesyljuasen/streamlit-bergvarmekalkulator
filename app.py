@@ -27,7 +27,7 @@ class Calculator:
         self.BUILDING_TYPE = "A"
         self.BUILDING_STANDARD = "X"
         
-        self.MINIMUM_TEMPERATURE = -2
+        self.MINIMUM_TEMPERATURE = -1
         self.BOREHOLE_BURIED_DEPTH = 10
         self.BOREHOLE_RADIUS = (115/1000)/2
         self.BOREHOLE_SIMULATION_YEARS = 30
@@ -651,7 +651,7 @@ class Calculator:
     
     def __adjust_heat_pump_size(self):
         #dekningsgrad = st.number_input("Energidekningsgrad [%]", value=100, min_value = 90, max_value = 100)
-        dekningsgrad = 100
+        dekningsgrad = 99
         thermal_demand = self.dhw_demand + self.space_heating_demand
         heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = dekningsgrad, timeserie = thermal_demand)
         heat_pump_size = np.max(heat_pump_series)
