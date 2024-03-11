@@ -17,6 +17,15 @@ from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
 
+def significant_digits(num):
+    if isinstance(num, int):
+        num_str = str(num).lstrip("-")  # Convert number to string and remove leading negative sign
+        return len(num_str.rstrip("0"))  # Count the number of significant digits
+
+    num_str = str(num).replace(".", "")  # Convert number to string and remove decimal point
+    num_str = num_str.lstrip("0")  # Remove leading zeros
+    return len(num_str)
+
 class Calculator:
     def __init__(self):
         self.set_streamlit_settings()
@@ -235,43 +244,43 @@ class Calculator:
         return state
     
     def __space_heating_input(self, demand_old):
-        number = st.text_input('1. Justere oppvarmingsbehovet [kWh/år]?', value = demand_old, help = "For en gjennomsnittlig norsk husholdning med panelovner utgjør oppvarmingsbehovet ca. 60 % av det årlige strømforbruket.")
-        if number.isdigit():
-            number = float(number)
-            if number < 13000:
-                st.error("Hvis reelt oppvarmingsbehov i boligen din er lavt (under 13 000 kWh per år), er bergvarme en mindre lønnsom investering.")
-                st.stop()
-            elif number > 100000:
-                st.error("Verdien kan ikke være større enn 100 000 kWh/år.")
-                st.stop()
-        elif number == 'None':
-            number = 0
-        elif number == '':
-            st.error("Input må være et tall")
+        number = st.number_input('1. Justere oppvarmingsbehovet [kWh/år]?', value = demand_old, step = 1000, help = "For en gjennomsnittlig norsk husholdning med panelovner utgjør oppvarmingsbehovet ca. 60 % av det årlige strømforbruket.")
+        #if number.isdigit():
+            #number = float(number)
+        if number < 13000:
+            st.error("Hvis reelt oppvarmingsbehov i boligen din er lavt (under 13 000 kWh per år), er bergvarme en mindre lønnsom investering.")
             st.stop()
-        else:
-            st.error('Input må være et tall')
+        elif number > 100000:
+            st.error("Verdien kan ikke være større enn 100 000 kWh/år.")
             st.stop()
+#        elif number == 'None':
+#            number = 0
+#        elif number == '':
+#            st.error("Input må være et tall")
+#            st.stop()
+#        else:
+#            st.error('Input må være et tall')
+#            st.stop()
         return number
     
     def __dhw_input(self, demand_old):
-        number = st.text_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, help = "Oppvarming av varmtvann utgjør ca. 15% av årlig strømforbruk, men det avhenger av hvor mange personer som bor i boligen.")
-        if number.isdigit():
-            number = float(number)
-            if number < 0:
-                st.error("Verdien kan ikke være mindre enn 0 kWh/år.")
-                st.stop()
-            elif number > 10000:
-                st.error("Verdien kan ikke være større enn 10 000 kWh/år.")
-                st.stop()
-        elif number == 'None':
-            number = 0
-        elif number == '':
-            st.error("Input må være et tall")
+        number = st.number_input('1. Justere varmtvannsbehovet [kWh/år]?', value = demand_old, step = 1000, help = "Oppvarming av varmtvann utgjør ca. 15% av årlig strømforbruk, men det avhenger av hvor mange personer som bor i boligen.")
+        #if number.isdigit():
+        #number = float(number)
+        if number < 0:
+            st.error("Verdien kan ikke være mindre enn 0 kWh/år.")
             st.stop()
-        else:
-            st.error('Input må være et tall')
+        elif number > 10000:
+            st.error("Verdien kan ikke være større enn 10 000 kWh/år.")
             st.stop()
+#        elif number == 'None':
+#            number = 0
+#        elif number == '':
+#            st.error("Input må være et tall")
+#            st.stop()
+#        else:
+#            st.error('Input må være et tall')
+#            st.stop()
         return number
             
     def __streamlit_demand_input(self):
@@ -303,6 +312,7 @@ class Calculator:
         #
         if dhw_percentage != 1 or space_heating_percentage != 1:
             st.info(f"Justert årlig behov for oppvarming og varmtvann: **{self.__rounding_to_int(space_heating_demand_new + dhw_demand_new):,} kWh**.".replace(",", " "), icon="ℹ️")
+            
 
     def __get_temperature_data(self):
         # find closest weather station
@@ -651,7 +661,7 @@ class Calculator:
     
     def __adjust_heat_pump_size(self):
         #dekningsgrad = st.number_input("Energidekningsgrad [%]", value=100, min_value = 90, max_value = 100)
-        dekningsgrad = 99
+        dekningsgrad = 100
         thermal_demand = self.dhw_demand + self.space_heating_demand
         heat_pump_series = self.__dekningsgrad_calculation(dekningsgrad = dekningsgrad, timeserie = thermal_demand)
         heat_pump_size = np.max(heat_pump_series)
@@ -665,6 +675,11 @@ class Calculator:
         self.delivered_from_wells_series = ((self.heat_pump_series - self.dhw_demand) * (1 - 1/self.COMBINED_COP)) + ((self.dhw_demand) * (1 - 1/self.DHW_COP))
         self.compressor_series = self.heat_pump_series - self.delivered_from_wells_series
         self.peak_series = thermal_demand - self.heat_pump_series
+        # energy for calculation
+        heat_pump_series_for_calculation = self.__dekningsgrad_calculation(dekningsgrad = 99, timeserie = thermal_demand)
+        delivered_from_wells_series_for_calculation = ((heat_pump_series_for_calculation - self.dhw_demand) * (1 - 1/self.COMBINED_COP)) + ((self.dhw_demand) * (1 - 1/self.DHW_COP))
+        compressor_series_for_calculation = heat_pump_series_for_calculation - delivered_from_wells_series_for_calculation
+        peak_series_for_calculation = thermal_demand - heat_pump_series_for_calculation
         # ghetool
         if self.average_temperature < 5:
             ground_temperature = 5
@@ -675,7 +690,7 @@ class Calculator:
         data = GroundData(k_s = self.THERMAL_CONDUCTIVITY, T_g = ground_temperature, R_b = 0.10, flux = 0.04)
         borefield = Borefield(simulation_period = self.BOREHOLE_SIMULATION_YEARS)
         borefield.set_ground_parameters(data) 
-        borefield.set_hourly_heating_load(heating_load = self.delivered_from_wells_series)
+        borefield.set_hourly_heating_load(heating_load = delivered_from_wells_series_for_calculation)
         borefield.set_hourly_cooling_load(np.zeros(8760))        
         borefield.set_max_ground_temperature(16)
         borefield.set_min_ground_temperature(self.MINIMUM_TEMPERATURE)
@@ -730,7 +745,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#1d3c34"),
-                name=f"Strøm til<br>varmepumpe:<br>{self.__rounding_to_int(np.sum(y_arr_1)):,} kWh/år".replace(
+                name=f"Strøm til<br>varmepumpe:<br>{self.__rounding_to_int_demand(np.sum(y_arr_1)):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -742,7 +757,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#48a23f"),
-                name=f"Fra brønner:<br>{self.__rounding_to_int(np.sum(y_arr_2)):,} kWh/år".replace(
+                name=f"Fra brønner:<br>{self.__rounding_to_int_demand(np.sum(y_arr_2)):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -827,11 +842,14 @@ class Calculator:
         )
         return fig
     
-    def __rounding_to_int(self, number):
+    def __round_up_to_nearest_10(self, number):
+        return math.ceil(number / 10) * 10
+
+    def __rounding_to_int(self, number, ):
         return math.ceil(round(number, 1))
     
     def __rounding_to_int_demand(self, number):
-        return math.ceil(round(number, -1))
+        return math.ceil(round(number, -3))
     
     def __rounding_to_float(self, number):
         return (round(number, 1))
@@ -852,18 +870,19 @@ class Calculator:
             column_1, column_2 = st.columns(2)
             with column_1:
                 svg = """<svg width="27" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="505" y="120" width="27" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-505 -120)"><path d="M18.6875 10.8333C20.9312 10.8333 22.75 12.6522 22.75 14.8958 22.75 17.1395 20.9312 18.9583 18.6875 18.9583L2.97917 18.9583C2.82959 18.9583 2.70833 19.0796 2.70833 19.2292 2.70833 19.3787 2.82959 19.5 2.97917 19.5L18.6875 19.5C21.2303 19.5 23.2917 17.4386 23.2917 14.8958 23.2917 12.353 21.2303 10.2917 18.6875 10.2917L3.63946 10.2917C3.63797 10.2916 3.63678 10.2904 3.63678 10.2889 3.6368 10.2882 3.63708 10.2875 3.63756 10.2871L7.23315 6.69148C7.33706 6.58388 7.33409 6.41244 7.22648 6.30852 7.12154 6.20715 6.95514 6.20715 6.85019 6.30852L2.78769 10.371C2.68196 10.4768 2.68196 10.6482 2.78769 10.754L6.85019 14.8165C6.95779 14.9204 7.12923 14.9174 7.23315 14.8098 7.33452 14.7049 7.33452 14.5385 7.23315 14.4335L3.63756 10.8379C3.63651 10.8369 3.63653 10.8351 3.63759 10.8341 3.6381 10.8336 3.63875 10.8333 3.63946 10.8333Z" stroke="#005173" stroke-width="0.270833" fill="#005173" transform="matrix(6.12323e-17 1 -1.03846 6.35874e-17 532 120)"/></g></svg>"""
+                total_meters = self.__round_up_to_nearest_10(self.number_of_boreholes * self.borehole_depth)
                 if self.number_of_boreholes > 1:
+                    self.borehole_depth = round((total_meters/self.number_of_boreholes) / 5) * 5
                     self.__render_svg_metric(svg, "Brønndybde", f"{self.number_of_boreholes} {well_description_text} á {self.__rounding_to_int(self.borehole_depth)} m")
                 else:
+                    self.borehole_depth = total_meters
                     self.__render_svg_metric(svg, "Brønndybde", f"{self.number_of_boreholes} {well_description_text} á {self.__rounding_to_int(self.borehole_depth)} m")
             with column_2:
                 if self.__rounding_to_int(np.max(self.peak_series)) != 0:
                     svg = """<svg width="31" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="395" y="267" width="31" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-395 -267)"><path d="M24.3005 0.230906 28.8817 0.230906 28.8817 25.7691 24.3005 25.7691Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#F0F3E3" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 2.48455 1.40391 25.5936 6.41918 25.5936 6.41918 2.48455C4.70124 1.49627 3.02948 1.44085 1.40391 2.48455Z" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 25.7691 1.23766 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 0.230906 6.59467 0.230906 6.59467 25.7691" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 17.6874 6.59467 17.6874" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M24.3005 8.33108 6.59467 8.33108" stroke="#1F3E36" stroke-width="0.461812" stroke-linecap="round" stroke-miterlimit="10" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 12.4874 10.1691 12.4874 10.1691 14.0114 11.222 14.7133 11.222 16.108 10.2153 16.8007 9.71652 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 12.4874 9.26394 12.4874 9.26394 14.0114 8.22025 14.7133 8.22025 16.108 9.21776 16.8007 9.72575 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 14.7226 12.4874 14.7226 14.0114 15.7663 14.7133 15.7663 16.108 14.7687 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 12.4874 13.8174 12.4874 13.8174 14.0114 12.7645 14.7133 12.7645 16.108 13.7712 16.8007 14.27 16.8007" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 5.90195 0.230906 5.90195 0.230906 10.9542 1.40391 10.9542" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M1.40391 13.0046 0.230906 13.0046 0.230906 25.0025 1.40391 25.0025" stroke="#005173" stroke-width="0.461812" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M28.0412 4.58117 25.2611 4.58117 25.2611 2.73393 25.2611 2.10586 28.0412 2.10586 28.0412 4.58117Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 2.73393 28.0412 2.73393" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.34352 28.0412 3.34352" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M25.4366 3.95311 28.0412 3.95311" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.71652 20.6799 10.1691 20.6799 10.1691 22.2131 11.222 22.9059 11.222 24.3005 10.2153 25.0025 9.71652 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M9.72575 20.6799 9.26394 20.6799 9.26394 22.2131 8.22025 22.9059 8.22025 24.3005 9.21776 25.0025 9.72575 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 14.7226 20.6799 14.7226 22.2131 15.7663 22.9059 15.7663 24.3005 14.7687 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M14.27 20.6799 13.8174 20.6799 13.8174 22.2131 12.7645 22.9059 12.7645 24.3005 13.7712 25.0025 14.27 25.0025" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 1.05293 23.4139 1.05293 23.4139 7.56448 20.0149 7.56448Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M17.9552 13.0046 23.4046 13.0046 23.4046 15.5538 17.9552 15.5538Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M19.0913 11.6931C19.0913 11.9073 18.9176 12.081 18.7034 12.081 18.4891 12.081 18.3155 11.9073 18.3155 11.6931 18.3155 11.4788 18.4891 11.3052 18.7034 11.3052 18.9176 11.3052 19.0913 11.4788 19.0913 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M18.7034 13.0046 18.7034 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.4028 11.6931C20.4028 11.9073 20.2292 12.081 20.0149 12.081 19.8007 12.081 19.627 11.9073 19.627 11.6931 19.627 11.4788 19.8007 11.3052 20.0149 11.3052 20.2292 11.3052 20.4028 11.4788 20.4028 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M20.0149 13.0046 20.0149 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.7421 11.6931C21.7421 11.9073 21.5684 12.081 21.3542 12.081 21.1399 12.081 20.9663 11.9073 20.9663 11.6931 20.9663 11.4788 21.1399 11.3052 21.3542 11.3052 21.5684 11.3052 21.7421 11.4788 21.7421 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M21.3542 13.0046 21.3542 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M23.0536 11.6931C23.0536 11.9073 22.88 12.081 22.6657 12.081 22.4515 12.081 22.2778 11.9073 22.2778 11.6931 22.2778 11.4788 22.4515 11.3052 22.6657 11.3052 22.88 11.3052 23.0536 11.4788 23.0536 11.6931Z" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="#FFF" transform="matrix(1.04327 0 0 1 395.314 267)"/><path d="M22.6657 13.0046 22.6657 12.081" stroke="#005173" stroke-width="0.230906" stroke-linecap="round" stroke-linejoin="round" fill="none" transform="matrix(1.04327 0 0 1 395.314 267)"/></g></svg>"""
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
-                    #self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.__rounding_to_int(np.max(self.dhw_demand + self.space_heating_demand))} kW") # juks?
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size-1} – {self.heat_pump_size+1} kW")
                 else:
-                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW")
-                    #self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size} kW") # juks?
+                    self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size-1} – {self.heat_pump_size+1} kW")
             
             with st.expander("Mer om brønndybde og varmepumpestørrelse"):
                 st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et bergvarmeanlegg med 
@@ -1008,7 +1027,6 @@ class Calculator:
         st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;font-size:2.0rem;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs entreprenør!</a>', unsafe_allow_html=True)       
             
     def main(self):
-        
         # initialize logging
         if 'log' not in st.session_state:
             st.session_state['log'] = False
