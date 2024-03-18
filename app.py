@@ -17,6 +17,11 @@ from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
 
+@st.cache_resource(show_spinner=False)
+def import_spotprice(selected_year):
+    df = pd.read_excel("src/csv/spotpriser.xlsx", sheet_name=selected_year)
+    return df
+
 def significant_digits(num):
     if isinstance(num, int):
         num_str = str(num).lstrip("-")  # Convert number to string and remove leading negative sign
@@ -270,8 +275,8 @@ class Calculator:
         if number < 0:
             st.error("Verdien kan ikke være mindre enn 0 kWh/år.")
             st.stop()
-        elif number > 10000:
-            st.error("Verdien kan ikke være større enn 10 000 kWh/år.")
+        elif number > 15000:
+            st.error("Verdien kan ikke være større enn 15 000 kWh/år.")
             st.stop()
 #        elif number == 'None':
 #            number = 0
@@ -381,6 +386,7 @@ class Calculator:
         self.space_heating_demand = (self.building_area * np.array(space_heating_series))
         dhw_heating_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_DHW"]
         self.dhw_demand = (self.building_area * np.array(dhw_heating_series))
+        self.dhw_demand = (25*self.building_area/np.sum(self.dhw_demand)) * self.dhw_demand
         electric_demand_series = profet_data_df[f"{self.BUILDING_TYPE}_{self.BUILDING_STANDARD}_ELECTRIC"]
         self.electric_demand = self.building_area * np.array(electric_demand_series)
         #--
@@ -407,8 +413,11 @@ class Calculator:
         self.heat_pump_cost = self.__rounding_to_int(214000 + (self.heat_pump_size) * 2200) # varmepumpe
         self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost
         # -- driftskostnader
-        self.direct_el_operation_cost = (self.dhw_demand + self.space_heating_demand) * self.elprice # kostnad direkte elektrisk
-        self.geoenergy_operation_cost = (self.compressor_series + self.peak_series) * self.elprice # kostnad grunnvarme 
+        self.direct_el_operation_cost = self.calculate_el_cost(self.dhw_demand + self.space_heating_demand) # kostnad direkte elektrisk
+        self.geoenergy_operation_cost = self.calculate_el_cost(self.compressor_series + self.peak_series) # kostnad grunnvarme
+
+        #self.direct_el_operation_cost = (self.dhw_demand + self.space_heating_demand) * self.elprice # kostnad direkte elektrisk
+        #self.geoenergy_operation_cost = (self.compressor_series + self.peak_series) * self.elprice # kostnad grunnvarme 
         self.savings_operation_cost = self.__rounding_to_int(np.sum(self.direct_el_operation_cost - self.geoenergy_operation_cost)) # besparelse
         self.savings_operation_cost_lifetime = self.savings_operation_cost * self.BOREHOLE_SIMULATION_YEARS
         # -- lån
@@ -609,18 +618,83 @@ class Calculator:
             space_heating = cop_radiator * space_heating_sum
         combined_cop = (space_heating) / (space_heating_sum)
         self.COMBINED_COP = float(st.number_input("Årsvarmefaktor", value = float(combined_cop), step = 0.1, min_value = 2.0, max_value= 5.0))
-        
+
+    def __nettleie_energiledd(self, row):
+        hour = row['Dato/klokkeslett'].hour
+        month = row['Dato/klokkeslett'].month
+        weekday = row['Dato/klokkeslett'].weekday()
+        if (0 <= hour < 6) or (22 <= hour <= 23) or (weekday in [5,6]): # night
+            if (month in [1, 2, 3]): # jan - mar
+                energiledd = 32.09
+            else: # apr - dec
+                energiledd = 40.75
+        else: # day
+            if (month in [1, 2, 3]): # jan - mar
+                energiledd = 39.59
+            else:
+                energiledd = 48.25 # apr - dec
+        return energiledd/100
+    
+    def __nettleie_kapasitetsledd(self, demand_array):
+        previous_index = 0
+        daymax = 0
+        daymax_list = []
+        series_list = []
+        cost_per_hour = 0
+        for index, value in enumerate(demand_array):
+            if value > daymax:
+                daymax = value
+            if index % 24 == 23:
+                daymax_list.append(daymax)
+                daymax = 0
+            if index in [744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8759]:
+                daymax_list = np.sort(daymax_list)[::-1]
+                average_max_value = np.mean(daymax_list[0:3])
+                if 0 < average_max_value <= 2:
+                    cost = 120
+                elif 2 < average_max_value <= 5:
+                    cost = 190
+                elif 5 < average_max_value <= 10:
+                    cost = 305
+                elif 10 < average_max_value <= 15:
+                    cost = 420
+                elif 15 < average_max_value <= 20:
+                    cost = 535
+                elif 20 < average_max_value <= 25:
+                    cost = 650
+                elif 25 < average_max_value <= 50:
+                    cost = 1225
+                elif 50 < average_max_value <= 75:
+                    cost = 1800
+                elif 75 < average_max_value <= 100:
+                    cost = 2375
+                elif average_max_value > 100:
+                    cost = 4750
+                cost_per_hour = cost/(index-previous_index)
+                if index == 8759:
+                    index = 8760
+                daymax_list = []
+                previous_index = index
+            series_list.append(cost_per_hour)
+        return series_list    
+    
+    def calculate_el_cost(self, demand_array):
+        cost_1 = demand_array * self.elprice # energiledd og spotpris
+        cost_2 = self.__nettleie_kapasitetsledd(demand_array = demand_array)
+        return (cost_1 + cost_2)
 
     def __adjust_elprice(self):
-        self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
-        #selected_el_option = st.selectbox("Strømpris", options=["Historisk strømpris: 2022", "Historisk strømpris: 2021", "Historisk strømpris: 2020", "Flat strømpris: 0.8 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh"], index = 1)
-        #selected_year = selected_el_option.split()[2]
-        #if float(selected_year) > 10:
-        #    df = pd.read_excel("src/csv/spotpriser.xlsx", sheet_name=selected_year)
-        #    spotprice_arr = df[self.ELPRICE_REGIONS_BACK[self.elprice_region]].to_numpy()/1.25
-        #    self.elprice = spotprice_arr
-        #else:
-        #    self.elprice = float(selected_year)
+        #self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
+        selected_el_option = st.selectbox("Strømpris", options=["Strømpris i 2023 inkl. nettleie", "Strømpris i 2022 inkl. nettleie", "Strømpris i 2021 inkl. nettleie", "Flat strømpris: 1.1 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh"], index = 0)
+        if (selected_el_option == "Strømpris i 2023 inkl. nettleie") or (selected_el_option == "Strømpris i 2022 inkl. nettleie") or (selected_el_option == "Strømpris i 2021 inkl. nettleie"):
+            selected_year = selected_el_option.split()[2]
+            df = import_spotprice(selected_year = selected_year)
+            df['Dato/klokkeslett'] = pd.to_datetime(df['Dato/klokkeslett'], format='%Y-%m-%d Kl. %H-%M')
+            df['Energiledd'] = df.apply(self.__nettleie_energiledd, axis=1)
+            self.elprice = df[self.ELPRICE_REGIONS_BACK[self.elprice_region]].to_numpy()/1.25 + df['Energiledd'].to_numpy()
+        else:
+            selected_year = selected_el_option.split()[2]
+            self.elprice = float(selected_year)
              
     def __adjust_energymix(self):
         option_list = ['Norsk', 'Norsk-europeisk', 'Europeisk']
@@ -683,8 +757,8 @@ class Calculator:
         # ghetool
         if self.average_temperature < 5:
             ground_temperature = 5
-        elif self.average_temperature > 8:
-            ground_temperature = 8
+        elif self.average_temperature > 7:
+            ground_temperature = 7
         else:
             ground_temperature = self.average_temperature
         data = GroundData(k_s = self.THERMAL_CONDUCTIVITY, T_g = ground_temperature, R_b = 0.10, flux = 0.04)
@@ -745,7 +819,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#1d3c34"),
-                name=f"Strøm til<br>varmepumpe:<br>{self.__rounding_to_int_demand(np.sum(y_arr_1)):,} kWh/år".replace(
+                name=f"Strøm til<br>varmepumpe:<br>{self.__rounding_to_int_demand(np.sum(y_arr_1), rounding=-2):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -757,7 +831,7 @@ class Calculator:
                 stackgroup="one",
                 fill="tonexty",
                 line=dict(width=0, color="#48a23f"),
-                name=f"Fra brønner:<br>{self.__rounding_to_int_demand(np.sum(y_arr_2)):,} kWh/år".replace(
+                name=f"Fra brønner:<br>{self.__rounding_to_int_demand(np.sum(y_arr_2 + y_arr_3), rounding=-2):,} kWh/år".replace(
                     ",", " "
                 ))
         )
@@ -848,8 +922,8 @@ class Calculator:
     def __rounding_to_int(self, number, ):
         return math.ceil(round(number, 1))
     
-    def __rounding_to_int_demand(self, number):
-        return math.ceil(round(number, -3))
+    def __rounding_to_int_demand(self, number, rounding=-2):
+        return math.ceil(round(number, rounding))
     
     def __rounding_to_float(self, number):
         return (round(number, 1))
@@ -885,23 +959,32 @@ class Calculator:
                     self.__render_svg_metric(svg, "Varmepumpestørrelse", f"{self.heat_pump_size-1} – {self.heat_pump_size+1} kW")
             
             with st.expander("Mer om brønndybde og varmepumpestørrelse"):
-                st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et bergvarmeanlegg med 
-                energibrønn og varmepumpe for din bolig. Dybde på energibrønn og størrelse på varmepumpe 
-                beregnes ut ifra et anslått oppvarmingsbehov for boligen din og antakelser om 
-                egenskapene til berggrunnen der du bor.""")
+                st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et 
+                         bergvarmeanlegg med energibrønn og varmepumpe for din bolig. 
+                         Dybde for energibrønn og størrelse på varmepumpe er beregnet 
+                         ut fra estimert årlig varmebehov.""")
+
+#                st.write(""" Vi har gjort en forenklet beregning for å dimensjonere et bergvarmeanlegg med 
+#                energibrønn og varmepumpe for din bolig. Dybde på energibrønn og størrelse på varmepumpe 
+#                beregnes ut ifra et anslått oppvarmingsbehov for boligen din og antakelser om 
+#                egenskapene til berggrunnen der du bor.""")
                 st.plotly_chart(figure_or_data = self.__plot_gshp_delivered(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 #st.write(f""" Dimensjonerende varmeeffektbehov er {self.dut_effect} kW. Med en varmepumpe på {self.heat_pump_size} kW blir effektdekningsgraden {self.__rounding_to_int((self.heat_pump_size/self.dut_effect) * 100)} %.""")
-                st.write(f""" Hvis uttaket av varme fra energibrønnen ikke er balansert med varmetilførselen i grunnen, 
-                        vil temperaturen på bergvarmesystemet synke og energieffektiviteten minke. Det er derfor viktig at energibrønnen er tilstrekkelig dyp
-                        til å kunne balansere varmeuttaket. """)
+#                st.write(f""" Hvis uttaket av varme fra energibrønnen ikke er balansert med varmetilførselen i grunnen, 
+#                        vil temperaturen på bergvarmesystemet synke og energieffektiviteten minke. Det er derfor viktig at energibrønnen er tilstrekkelig dyp
+#                        til å kunne balansere varmeuttaket. """)
                 if self.number_of_boreholes > 1:
                     energy_well_text = "energibrønnene"
                 else:
                     energy_well_text = "energibrønnen"
-                st.write(f"""Den innledende beregningen viser at {energy_well_text} kan levere ca. 
-                         {self.__rounding_to_int(self.kWh_per_meter)} kWh/(m∙år) og {self.__rounding_to_int(self.W_per_meter)} W/m for at 
-                         positiv temperatur i grunnen opprettholdes gjennom anleggets levetid (se figur under). """)  
-                st.plotly_chart(figure_or_data = self.__plot_borehole_temperature(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+                st.write(f""" Det er viktig at {energy_well_text} er dyp nok til at temperaturen i {energy_well_text} holder seg jevn over tid. 
+                         Den varmen som varmepumpen henter ut fra {energy_well_text}, må balanseres med varme som naturlig tilføres {energy_well_text} fra grunnen rundt den.""")
+                
+#                st.write(f"""Den innledende beregningen viser at {energy_well_text} kan levere ca. 
+#                         {self.__rounding_to_int(self.kWh_per_meter)} kWh/(m∙år) og {self.__rounding_to_int(self.W_per_meter)} W/m for at 
+#                         positiv temperatur i grunnen opprettholdes gjennom anleggets levetid. """)
+                  
+                #st.plotly_chart(figure_or_data = self.__plot_borehole_temperature(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 if self.number_of_boreholes > 1:
                     st.info(f"🛈 Det bør være minimum 15 meter avstand mellom brønnene. Dersom de plasseres nærmere vil ytelsen til brønnene bli dårligere.")
                 st.warning("""**⚠ Før du kan installere bergvarme, må entreprenøren gjøre en grundigere beregning. 
