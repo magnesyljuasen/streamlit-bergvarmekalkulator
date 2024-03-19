@@ -17,6 +17,33 @@ from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
 
+def hour_to_month(hourly_array, aggregation='sum'):
+    result_array = []
+    temp_value = 0 if aggregation in ['sum', 'max'] else []
+    count = 0 if aggregation == 'average' else None
+    for index, value in enumerate(hourly_array):
+        if np.isnan(value):
+            value = 0
+        if aggregation == 'sum':
+            temp_value += value
+        elif aggregation == 'average':
+            temp_value.append(value)
+            count += 1
+        elif aggregation == 'max' and value > temp_value:
+            temp_value = value
+        if index in [744, 1416, 2160, 2880, 3624, 4344, 5088, 5832, 6552, 7296, 8016, 8759]:
+            if aggregation == 'average':
+                if count != 0:
+                    result_array.append(sum(temp_value) / count)
+                else:
+                    result_array.append(0)
+                temp_value = []
+                count = 0
+            else:
+                result_array.append(temp_value)
+                temp_value = 0 if aggregation in ['sum', 'max'] else []
+    return result_array
+
 @st.cache_resource(show_spinner=False)
 def import_spotprice(selected_year):
     df = pd.read_excel("src/csv/spotpriser.xlsx", sheet_name=selected_year)
@@ -484,6 +511,57 @@ class Calculator:
             gridwidth=0.3,
         )
         fig.update_yaxes(
+            tickformat=",",
+            ticks="outside",
+            linecolor="black",
+            gridcolor="lightgrey",
+            gridwidth=0.3,
+        )
+        fig.update_layout(separators="* .*")
+        return fig
+    
+    def __plot_costs_monthly(self, geoenergy_operation_cost, direct_el_operation_cost, y_max=None, y_min=None):
+        y_1 = np.concatenate((geoenergy_operation_cost[6:], geoenergy_operation_cost[:6]))
+        y_2 = np.concatenate((direct_el_operation_cost[6:], direct_el_operation_cost[:6]))
+        x = ['jul', 'aug', 'sep', 'okt', 'nov', 'des', 'jan', 'feb', 'mar', 'apr', 'mai', 'jun']
+        fig = go.Figure(data = [
+            go.Bar(
+                x=x,
+                y=y_1,
+                #mode='lines',
+                hoverinfo='skip',
+                marker_color = "#48a23f",
+                name=f"Bergvarme:<br>{self.__rounding_costs_to_int(np.sum(y_1)):,} kr/år".replace(",", " "),
+            )
+            , 
+            go.Bar(
+                x=x,
+                y=y_2,
+                #mode='lines',
+                hoverinfo='skip',
+                marker_color = "#880808",
+                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_costs_to_int(np.sum(y_2)):,} kr/år".replace(",", " "),
+            )])
+        fig["data"][0]["showlegend"] = True
+        fig.update_layout(legend=dict(itemsizing='constant'))
+        fig.update_layout(
+            legend_title = "Månedlige kostnader:",
+            legend_title_font=dict(size=16),
+            legend_font=dict(size=16),
+            autosize=True,
+            margin=dict(l=0,r=0,b=10,t=10,pad=0),
+            yaxis_title="Oppvarmingskostnader [kr]",
+            plot_bgcolor="white",
+            legend=dict(yanchor="top", y=0.98, xanchor="left", x=0.01, bgcolor="rgba(0,0,0,0)"),
+        )
+        fig.update_xaxes(
+            ticks="outside",
+            linecolor="black",
+            gridcolor="lightgrey",
+            gridwidth=0.3,
+        )
+        fig.update_yaxes(
+            range=[y_min, y_max],
             tickformat=",",
             ticks="outside",
             linecolor="black",
@@ -1059,6 +1137,7 @@ class Calculator:
                     if payment_time < 30:
                         st.write(f"Grafene under viser at anlegget er nedbetalt etter ca. {payment_time} år.")
                         st.plotly_chart(figure_or_data = self.__plot_costs_investment(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+#                        st.plotly_chart(figure_or_data = self.__plot_costs_monthly(geoenergy_operation_cost=hour_to_month(self.geoenergy_operation_cost), direct_el_operation_cost=hour_to_month(self.direct_el_operation_cost)), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                     else:
                         st.warning(f"⚠ Med estimerte investeringskostnader, dagens støtteordninger og {self.selected_el_option.lower()} er bergvarme nedbetalt etter ca. {payment_time} år.")
 
@@ -1073,6 +1152,7 @@ class Calculator:
                         av et grønt lån. """ + f""" Her har vi forutsatt at investeringen nedbetales i 
                         løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %""".replace(".", ",") + ".")
                         st.plotly_chart(figure_or_data = self.__plot_costs_loan(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+#                        st.plotly_chart(figure_or_data = self.__plot_costs_monthly(geoenergy_operation_cost=hour_to_month(self.geoenergy_operation_cost) + np.full(12, self.loan_cost_monthly), direct_el_operation_cost=hour_to_month(self.direct_el_operation_cost)), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 else:
                     st.warning("⚠ Lånefinansiering er ikke lønnsomt innenfor varmepumpens levetid.")
             
