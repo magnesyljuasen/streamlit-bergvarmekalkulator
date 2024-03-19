@@ -409,9 +409,13 @@ class Calculator:
 
     def cost_calculation(self):
         # -- investeringskostnader
+        if self.waterborne_heat_cost > 0:
+            self.enova_tilskudd = -40000
+        else:
+            self.enova_tilskudd = -15000
         self.geoenergy_investment_cost = self.__rounding_to_int(20000 + (self.borehole_depth * self.number_of_boreholes) * 437.5) # brønn + graving
         self.heat_pump_cost = self.__rounding_to_int(214000 + (self.heat_pump_size) * 2200) # varmepumpe
-        self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost
+        self.investment_cost = self.geoenergy_investment_cost + self.heat_pump_cost + self.waterborne_heat_cost + self.enova_tilskudd
         # -- driftskostnader
         self.direct_el_operation_cost = self.calculate_el_cost(self.dhw_demand + self.space_heating_demand) # kostnad direkte elektrisk
         self.geoenergy_operation_cost = self.calculate_el_cost(self.compressor_series + self.peak_series) # kostnad grunnvarme
@@ -444,7 +448,7 @@ class Calculator:
                 mode='lines',
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme (lån):<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme (lån):<br>{self.__rounding_costs_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Scatter(
@@ -453,7 +457,7 @@ class Calculator:
                 mode='lines',
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_costs_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
@@ -500,7 +504,7 @@ class Calculator:
                 mode='lines',
                 hoverinfo='skip',
                 marker_color = "#48a23f",
-                name=f"Bergvarme:<br>{self.__rounding_cost_plot_to_int(np.max(y_1)):,} kr".replace(",", " "),
+                name=f"Bergvarme:<br>{self.__rounding_costs_to_int(np.max(y_1)):,} kr".replace(",", " "),
             )
             , 
             go.Scatter(
@@ -509,7 +513,7 @@ class Calculator:
                 mode='lines',
                 hoverinfo='skip',
                 marker_color = "#880808",
-                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_cost_plot_to_int(np.max(y_2)):,} kr".replace(",", " "),
+                name=f"Direkte elektrisk<br>oppvarming:<br>{self.__rounding_costs_to_int(np.max(y_2)):,} kr".replace(",", " "),
             )])
         fig["data"][0]["showlegend"] = True
         fig.update_layout(legend=dict(itemsizing='constant'))
@@ -681,7 +685,7 @@ class Calculator:
     def calculate_el_cost(self, demand_array):
         cost_1 = demand_array * self.elprice # energiledd og spotpris
         cost_2 = self.__nettleie_kapasitetsledd(demand_array = demand_array)
-        return (cost_1 + cost_2)
+        return (cost_1 + cost_2)*1.25
 
     def __adjust_elprice(self):
         #self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
@@ -1028,12 +1032,19 @@ class Calculator:
                 # direktekjøp
                 __show_metrics(investment = self.investment_cost, short_term_savings = self.short_term_investment, long_term_savings = self.long_term_investment)
                 with st.expander("Mer om lønnsomhet med bergvarme"): 
+                    
                     st.write(""" Estimert investeringskostnad dekker et komplett bergvarmeanlegg, 
                              inkludert energibrønn, varmepumpe og installasjon. Vi har antatt at kostnadene fordeler seg slik: """)
                     st.write(f"- • Energibrønn: {self.__rounding_costs_to_int(self.geoenergy_investment_cost):,} kr".replace(",", " "))
                     st.write(f"- • Bergvarmepumpe: {self.__rounding_costs_to_int(self.heat_pump_cost):,} kr".replace(",", " "))
+                    
+
                     if self.waterborne_heat_cost > 0:
                         st.write(f"- • Vannbåren varme: {self.__rounding_costs_to_int(self.waterborne_heat_cost):,} kr".replace(",", " "))
+                        st.write(f"- • Enovatilskudd: {self.enova_tilskudd:,} kr".replace(",", " "))
+                    else:
+                        st.write(f"- • Enovatilskudd {self.enova_tilskudd:,} kr".replace(",", " "))
+                        
                     st.write("")
                     st.write(""" Prisene er inkludert mva. NB! Dette er et anslag basert på priser 
                              fra en spørreundersøkelse blant forhandlere høsten 2023. 
