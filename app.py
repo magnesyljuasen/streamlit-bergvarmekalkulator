@@ -689,8 +689,9 @@ class Calculator:
 
     def __adjust_elprice(self):
         #self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
-        selected_el_option = st.selectbox("Strømpris", options=["Strømpris i 2023 inkl. nettleie", "Strømpris i 2022 inkl. nettleie", "Strømpris i 2021 inkl. nettleie", "Flat strømpris: 1.1 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh"], index = 0)
-        if (selected_el_option == "Strømpris i 2023 inkl. nettleie") or (selected_el_option == "Strømpris i 2022 inkl. nettleie") or (selected_el_option == "Strømpris i 2021 inkl. nettleie"):
+        selected_el_option = st.selectbox("Strømpris inkl. nettleie, avgifter og mva.", options=["Strømpris i 2023", "Strømpris i 2022", "Strømpris i 2021", "Flat strømpris: 1.1 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh", "Flat strømpris: 2.5 kr/kWh", "Flat strømpris: 3.0 kr/kWh"], index = 0)
+        self.selected_el_option = selected_el_option
+        if (selected_el_option == "Strømpris i 2023") or (selected_el_option == "Strømpris i 2022") or (selected_el_option == "Strømpris i 2021"):
             selected_year = selected_el_option.split()[2]
             df = import_spotprice(selected_year = selected_year)
             df['Dato/klokkeslett'] = pd.to_datetime(df['Dato/klokkeslett'], format='%Y-%m-%d Kl. %H-%M')
@@ -1001,15 +1002,18 @@ class Calculator:
             c1, c2 = st.columns(2)
             with c1:
                 svg = """ <svg width="13" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="614" y="84" width="13" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-614 -84)"><path d="M614.386 99.81 624.228 84.3312C624.464 83.9607 625.036 84.2358 624.89 84.6456L621.224 95.1164C621.14 95.3522 621.32 95.5992 621.572 95.5992L626.3 95.5992C626.603 95.5992 626.777 95.9417 626.597 96.1831L616.458 109.691C616.194 110.039 615.644 109.725 615.823 109.326L619.725 100.456C619.838 100.203 619.63 99.9223 619.355 99.9447L614.74 100.36C614.437 100.388 614.229 100.057 614.392 99.7987Z" stroke="#005173" stroke-width="0.308789" stroke-linecap="round" stroke-miterlimit="10" fill="#FFF"/></g></svg>"""
-                self.__render_svg_metric(svg, "Strømbesparelse", f"{self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh/år".replace(',', ' '))
+                self.__render_svg_metric(svg, "Spart strøm fra strømnettet", f"{self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh/år".replace(',', ' '))
             with c2:
                 svg = """ <svg width="26" height="35" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" overflow="hidden"><defs><clipPath id="clip0"><rect x="458" y="120" width="26" height="26"/></clipPath></defs><g clip-path="url(#clip0)" transform="translate(-458 -120)"><path d="M480.21 137.875 480.21 135.438 472.356 129.885 472.356 124.604C472.356 123.548 471.814 122.167 471.001 122.167 470.216 122.167 469.647 123.548 469.647 124.604L469.647 129.885 461.793 135.438 461.793 137.875 469.647 133.948 469.647 139.852 466.939 142.208 466.939 143.833 471.001 142.208 475.064 143.833 475.064 142.208 472.356 139.852 472.356 133.948ZM472 140.261 474.522 142.455 474.522 143.033 471.203 141.706 471.001 141.624 470.8 141.706 467.481 143.033 467.481 142.455 470.003 140.261 470.189 140.099 470.189 133.072 469.403 133.463 462.335 136.999 462.335 135.718 469.96 130.328 470.189 130.166 470.189 124.604C470.189 123.645 470.703 122.708 471.001 122.708 471.341 122.708 471.814 123.664 471.814 124.604L471.814 130.166 472.043 130.328 479.668 135.718 479.668 136.999 472.598 133.463 471.814 133.072 471.814 140.099Z" stroke="#005173" stroke-width="0.270833"/></g></svg>"""
                 self.__render_svg_metric(svg, f"Utslippskutt etter {self.BOREHOLE_SIMULATION_YEARS} år", f"{self.emission_savings_flights:,} sparte flyreiser".replace(',', ' '))
             with st.expander("Mer om strømsparing og utslippskutt"):
-                st.write(f""" Vi har beregnet hvor mye strøm bergvarme vil spare i din bolig sammenlignet med å bruke elektrisk oppvarming.
-                Figurene viser at du sparer {self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh i året med bergvarme. 
+                st.write(f""" Vi har beregnet hvor mye strøm bergvarme vil spare i din bolig sammenlignet med å bruke elektrisk oppvarming."""
+                         + """ I den kaldeste timen om vinteren vil anlegget spare""" + f""" {round(np.max(self.delivered_from_wells_series),1)} kWh """.replace(".", ",") + """strøm fra strømnettet. """ +
+                f"""Figurene viser at du sparer {self.__rounding_to_int_demand(np.sum(self.delivered_from_wells_series)):,} kWh i året med bergvarme. 
                 Hvis vi tar utgangspunkt i en {self.selected_emission_constant.lower()} strømmiks
                 vil du i løpet av {self.BOREHOLE_SIMULATION_YEARS} år spare ca. {self.emission_savings} tonn CO\u2082. Dette tilsvarer **{self.emission_savings_flights} flyreiser** tur-retur Oslo - Trondheim. """.replace(',', ' '))
+
+                st.write()
                 self.__plot_environmental()
 
     def cost_results(self):
@@ -1026,12 +1030,12 @@ class Calculator:
                 self.__render_svg_metric(svg, f"Samlet besparelse<br>etter {self.BOREHOLE_SIMULATION_YEARS} år", f"{self.__rounding_costs_to_int(long_term_savings):,} {long_term_savings_unit}".replace(',', ' ')) 
            
         with st.container():
-            st.write("**Lønnsomhet**")
+            st.write("**Tilbakebetalingstid**")
             tab1, tab2 = st.tabs(["Direktekjøp", "Lånefinansiert"])
             with tab1:
                 # direktekjøp
                 __show_metrics(investment = self.investment_cost, short_term_savings = self.short_term_investment, long_term_savings = self.long_term_investment)
-                with st.expander("Mer om lønnsomhet med bergvarme"): 
+                with st.expander("Mer om tilbakebetalingstid med bergvarme"): 
                     
                     st.write(""" Estimert investeringskostnad dekker et komplett bergvarmeanlegg, 
                              inkludert energibrønn, varmepumpe og installasjon. Vi har antatt at kostnadene fordeler seg slik: """)
@@ -1050,15 +1054,19 @@ class Calculator:
                              fra en spørreundersøkelse blant forhandlere høsten 2023. 
                              Faktiske priser kan variere mye fra sted til sted, og bestemmes av leverandør.""")
                     st.write("")
-                    payment_time = math.ceil(-self.investment_cost / ((np.sum(self.geoenergy_operation_cost) - np.sum(self.direct_el_operation_cost))))
                     st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her.</a>', unsafe_allow_html=True)     
-                    st.write(f"Grafene under viser at anlegget er nedbetalt etter ca. {payment_time} år.")
-                    st.plotly_chart(figure_or_data = self.__plot_costs_investment(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+                    payment_time = math.ceil(-self.investment_cost / ((np.sum(self.geoenergy_operation_cost) - np.sum(self.direct_el_operation_cost))))
+                    if payment_time < 30:
+                        st.write(f"Grafene under viser at anlegget er nedbetalt etter ca. {payment_time} år.")
+                        st.plotly_chart(figure_or_data = self.__plot_costs_investment(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
+                    else:
+                        st.warning(f"⚠ Med estimerte investeringskostnader, dagens støtteordninger og {self.selected_el_option.lower()} er bergvarme nedbetalt etter ca. {payment_time} år.")
+
             with tab2:
                 # lån
                 if self.short_term_loan > 0:
                     __show_metrics(investment = 0, short_term_savings = self.short_term_loan, long_term_savings = self.long_term_loan, investment_text = "Investeringskostnad (lånefinansiert)")
-                    with st.expander("Mer om lønnsomhet med bergvarme"):                       
+                    with st.expander("Mer om tilbakebetalingstid med bergvarme"):                       
                         st.write(f""" Mange banker har begynt å tilby billigere boliglån hvis boligen regnes som miljøvennlig; et såkalt grønt boliglån. 
                         En oppgradering til bergvarme kan kvalifisere boligen din til et slikt lån. """)
                         st.write(f""" Grafene under viser årlige kostnader til oppvarming hvis investeringen finansieres 
@@ -1066,7 +1074,7 @@ class Calculator:
                         løpet av {self.BOREHOLE_SIMULATION_YEARS} år med effektiv rente på {round(self.INTEREST,2)} %""".replace(".", ",") + ".")
                         st.plotly_chart(figure_or_data = self.__plot_costs_loan(), use_container_width=True, config = {'displayModeBar': False, 'staticPlot': True})
                 else:
-                    st.warning("Lånefinansiering er ikke lønnsomt innenfor varmepumpens levetid.", icon="⚠️")
+                    st.warning("⚠ Lånefinansiering er ikke lønnsomt innenfor varmepumpens levetid.")
             
     def streamlit_results(self):
         st.header("Resultater for din bolig")
