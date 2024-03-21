@@ -100,11 +100,25 @@ class Calculator:
         st.set_page_config(
         page_title="Bergvarmekalkulatoren",
         page_icon="♨️",
-        layout="centered",
+        layout="wide",
         initial_sidebar_state="collapsed")
         
         with open("src/styles/main.css") as f:
             st.markdown("<style>{}</style>".format(f.read()), unsafe_allow_html=True)
+
+        st.markdown(
+        """
+            <style>
+                .appview-container .main .block-container {{
+                    padding-top: {padding_top}rem;
+                    padding-bottom: {padding_bottom}rem;
+                    }}
+
+            </style>""".format(
+            padding_top=1, padding_bottom=1
+        ),
+        unsafe_allow_html=True,
+        )
 
         st.markdown(
             """
@@ -116,7 +130,7 @@ class Calculator:
             </style>
             """,
             unsafe_allow_html=True,
-        )
+            )
        
     def streamlit_input_container(self):
         def __streamlit_onclick_function():
@@ -139,20 +153,22 @@ class Calculator:
             if 'log' not in st.session_state:
                 st.session_state['log'] = False
             if st.session_state["log"] == False:
-                log_data = {
-                    "postnummer": self.address_postcode,
-                    "areal": int(self.building_area),
-                    "byggeaar": self.building_age,
-                    "vannbaaren varme": self.waterborne_heat_option,
-                    "type vannbaarent varmesystem": self.selected_cop_option
-                }
-                file_path = "log_file.json"
-                with open(file_path, "w") as json_file:
-                    json.dump(log_data, json_file, indent=None)
+                try:
+                    log_data = {
+                        "postnummer": self.address_postcode,
+                        "areal": int(self.building_area),
+                        "byggeaar": self.building_age,
+                        "vannbaaren varme": self.waterborne_heat_option,
+                        "type vannbaarent varmesystem": self.selected_cop_option
+                    }
+                    file_path = "log_file.json"
+                    with open(file_path, "w") as json_file:
+                        json.dump(log_data, json_file, indent=None)
 
-                streamlit_root_logger = logging.getLogger(st.__name__)
-                streamlit_root_logger.info(f"Ny registrering. Postnummer ({self.address_postcode}). Areal ({int(self.building_area)} m²). Byggeår ({self.building_age}). Vannbåren varme ({self.waterborne_heat_option}). Type vannbårent varmesystem ({self.selected_cop_option}).")
-
+                    streamlit_root_logger = logging.getLogger(st.__name__)
+                    streamlit_root_logger.info(f"Ny registrering. Postnummer ({self.address_postcode}). Areal ({int(self.building_area)} m²). Byggeår ({self.building_age}). Vannbåren varme ({self.waterborne_heat_option}). Type vannbårent varmesystem ({self.selected_cop_option}).")
+                except:
+                    pass
                 st.session_state["log"] = True
             # initialize logging
         else:
@@ -237,8 +253,11 @@ class Calculator:
             st.stop()
             
     def __area_input(self):
-        number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem.")
-        if number.isdigit():
+        number = st.number_input('1. Skriv inn oppvarmet boligareal [m²]', value = None, step = 10, help = "Boligarealet som tilføres varme fra boligens varmesystem.")
+        
+        #number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem.")
+        if number != None:
+        #if number.isdigit():
             number = float(number)
             if number < 120:
                 st.error("For boliger som har mindre enn 120 m² oppvarmet areal er varmebehovet vanligvis så lavt at bergvarme blir uforholdsmessig dyrt.")
@@ -249,7 +268,7 @@ class Calculator:
         elif number == 'None' or number == '':
             number = 0
         else:
-            st.error('Input må være et tall.', icon="⚠️")
+            #st.error('Input må være et tall.', icon="⚠️")
             number = 0
         return number
     
@@ -806,7 +825,7 @@ class Calculator:
 
     def __adjust_elprice(self):
         #self.elprice = st.number_input("Velg strømpris [kr/kWh]", min_value = 1.0, value = 2.0, max_value = 5.0, step = 0.1)
-        selected_el_option = st.selectbox(f"Strømpris inkl. nettleie, avgifter og mva i {self.elprice_region}.", options=["Strømpris i 2023", "Strømpris i 2022", "Strømpris i 2021", "Flat strømpris: 1.1 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh", "Flat strømpris: 2.5 kr/kWh", "Flat strømpris: 3.0 kr/kWh"], index = 0)
+        selected_el_option = st.selectbox(f"Strømpris inkl. nettleie, avgifter og mva i {self.elprice_region}", options=["Strømpris i 2023", "Strømpris i 2022", "Strømpris i 2021", "Flat strømpris: 1.1 kr/kWh", "Flat strømpris: 1.5 kr/kWh", "Flat strømpris: 2.0 kr/kWh", "Flat strømpris: 2.5 kr/kWh", "Flat strømpris: 3.0 kr/kWh"], index = 0)
         self.selected_el_option = selected_el_option
         if (selected_el_option == "Strømpris i 2023") or (selected_el_option == "Strømpris i 2022") or (selected_el_option == "Strømpris i 2021"):
             selected_year = selected_el_option.split()[2]
@@ -1241,7 +1260,7 @@ class Calculator:
         encodedBytes = base64.b64encode(json_data.encode("utf-8"))
         encodedStr = str(encodedBytes, "utf-8")
         st.write("")
-        st.markdown(f'<a target="parent" style="color: white !important; font-weight:600; font-size: 16px; border-radius: 15px; text-align: center; padding: 1rem; min-height: 60px; display: inline-block; box-sizing: border-box; width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={self.address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs forhandler!</a>', unsafe_allow_html=True)
+        st.markdown(f'<a target="parent" style="color: white !important; font-weight:600; font-size: 20px; border-radius: 15px; text-align: center; padding: 1rem; min-height: 60px; display: inline-block; box-sizing: border-box; width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={self.address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs forhandler!</a>', unsafe_allow_html=True)
 
     def main(self):    
         self.streamlit_hide_fullscreen_view()
