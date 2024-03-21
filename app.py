@@ -16,7 +16,6 @@ from PIL import Image
 from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
-import os
 
 def hour_to_month(hourly_array, aggregation='sum'):
     result_array = []
