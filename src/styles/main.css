@@ -20,8 +20,15 @@ a {
     display: none;
 }
 
+a {
+  background-color: #0d8611;
+  color: white !important;
+  text-decoration: none;
+}
+
 a:hover {
-    color: #005173 !important;
+    background-color: black;
+    color: white !important;
     text-decoration: none;
 }
 
