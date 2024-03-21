@@ -16,6 +16,7 @@ from PIL import Image
 from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
+import os
 
 def hour_to_month(hourly_array, aggregation='sum'):
     result_array = []
@@ -134,6 +135,26 @@ class Calculator:
             self.progress_bar = st.progress(0, text="Laster inn...")
             st.toast("Beregner ...", icon = "💻")
             st.session_state.load_state = True
+            # initialize logging
+            if 'log' not in st.session_state:
+                st.session_state['log'] = False
+            if st.session_state["log"] == False:
+                log_data = {
+                    "postnummer": self.address_postcode,
+                    "areal": int(self.building_area),
+                    "byggeaar": self.building_age,
+                    "vannbaaren varme": self.waterborne_heat_option,
+                    "type vannbaarent varmesystem": self.selected_cop_option
+                }
+                file_path = "log_file.json"
+                with open(file_path, "w") as json_file:
+                    json.dump(log_data, json_file, indent=None)
+
+                streamlit_root_logger = logging.getLogger(st.__name__)
+                streamlit_root_logger.info(f"Ny registrering. Postnummer ({self.address_postcode}). Areal ({int(self.building_area)} m²). Byggeår ({self.building_age}). Vannbåren varme ({self.waterborne_heat_option}). Type vannbårent varmesystem ({self.selected_cop_option}).")
+
+                st.session_state["log"] = True
+            # initialize logging
         else:
             st.stop()
             
@@ -247,6 +268,7 @@ class Calculator:
             
         if self.building_area == 0:
             st.stop()
+        self.building_age = selected_option
                 
     def __streamlit_area_input(self):
         #c1, c2 = st.columns(2)
@@ -281,6 +303,7 @@ class Calculator:
         elif selected_option == "Ja":
             self.waterborne_heat_cost = 0
             state = True
+        self.waterborne_heat_option = selected_option
         return state
     
     def __space_heating_input(self, demand_old):
@@ -1218,18 +1241,9 @@ class Calculator:
         encodedBytes = base64.b64encode(json_data.encode("utf-8"))
         encodedStr = str(encodedBytes, "utf-8")
         st.write("")
-        st.markdown(f'<a target="parent" style="color: white !important; font-size: 2.0rem; border-radius: 15px; text-align: center; padding: 1rem; min-height: 60px; display: inline-block; box-sizing: border-box; width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={self.address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs forhandler!</a>', unsafe_allow_html=True)
+        st.markdown(f'<a target="parent" style="color: white !important; font-weight:600; font-size: 16px; border-radius: 15px; text-align: center; padding: 1rem; min-height: 60px; display: inline-block; box-sizing: border-box; width: 100%;" href="https://www.varmepumpeinfo.no/forhandler?postnr={self.address_postcode}&adresse={self.address_str}&type=bergvarme&meta={encodedStr}">Sett i gang - finn en seriøs forhandler!</a>', unsafe_allow_html=True)
 
-    def main(self):
-        # initialize logging
-        if 'log' not in st.session_state:
-            st.session_state['log'] = False
-        if st.session_state["log"] == False:
-            streamlit_root_logger = logging.getLogger(st.__name__)
-            streamlit_root_logger.info("Ny pålogging")
-            st.session_state["log"] = True
-        # initialize logging
-            
+    def main(self):    
         self.streamlit_hide_fullscreen_view()
         self.streamlit_input_container() # start progress bar
         self.streamlit_calculations()
