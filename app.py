@@ -253,11 +253,11 @@ class Calculator:
             st.stop()
             
     def __area_input(self):
-        number = st.number_input('1. Skriv inn oppvarmet boligareal [m²]', value = None, step = 10, help = "Boligarealet som tilføres varme fra boligens varmesystem.")
+        #number = st.number_input('1. Skriv inn oppvarmet boligareal [m²]', value = None, step = 10, help = "Boligarealet som tilføres varme fra boligens varmesystem.")
         
-        #number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem.")
-        if number != None:
-        #if number.isdigit():
+        number = st.text_input('1. Skriv inn oppvarmet boligareal [m²]', help = "Boligarealet som tilføres varme fra boligens varmesystem.")
+        #if number != None:
+        if number.isdigit():
             number = float(number)
             if number < 120:
                 st.error("For boliger som har mindre enn 120 m² oppvarmet areal er varmebehovet vanligvis så lavt at bergvarme blir uforholdsmessig dyrt.")
@@ -268,7 +268,7 @@ class Calculator:
         elif number == 'None' or number == '':
             number = 0
         else:
-            #st.error('Input må være et tall.', icon="⚠️")
+            st.error('Input må være et tall.', icon="⚠️")
             number = 0
         return number
     
