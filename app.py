@@ -1151,7 +1151,7 @@ class Calculator:
                     
                     st.write(f""" Investeringen kvalifiserer for Enovatilskudd - vi estimerer at du får {self.enova_tilskudd:,} kr i støtte.""".replace(",", " "))
                     st.write("")
-                    st.markdown(f'<a target="parent" style="background-color: #white;text-decoration: underline;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her.</a>', unsafe_allow_html=True)     
+                    st.markdown(f'<a target="parent" style="background-color: #white;color:black;border: solid 1px #e5e7eb; border-radius: 15px; text-align: center;padding: 16px 24px;min-height: 60px;display: inline-block;box-sizing: border-box;width: 100%;" href="https://www.varmepumpeinfo.no/tilskudd-fra-enova">Bergvarmepumper får tilskudd fra Enova. Les mer her.</a>', unsafe_allow_html=True)     
                     payment_time = math.ceil(-self.investment_cost / ((np.sum(self.geoenergy_operation_cost) - np.sum(self.direct_el_operation_cost))))
                     if payment_time < 30:
                         st.write(f"Grafene under viser at anlegget er nedbetalt etter ca. {payment_time} år.")
