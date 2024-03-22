@@ -17,7 +17,10 @@ from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
 import os
-    
+from typing import List
+
+def search(searchterm: str) -> List[str]:
+    return [f"{searchterm}_{i}" for i in range(10)]
 
 def hour_to_month(hourly_array, aggregation='sum'):
     result_array = []
@@ -230,7 +233,7 @@ class Calculator:
             __address_search,
             key="address_search",
             placeholder = "Adresse 🏠",
-            clear_on_submit = False
+            clear_on_submit = False,
         )
         if selected_adr != None:
             try:

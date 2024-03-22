@@ -43,6 +43,7 @@ ul.streamlit-expander {
 
 section[tabindex="0"] {
   overflow-x: hidden;
+  min-width: 375px;
 }
 
 
