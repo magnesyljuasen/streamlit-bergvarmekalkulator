@@ -18,5 +18,25 @@
             "Vannbaaren varme": "Ja",
             "Type vannbaarent varmesystem": "Radiator"
         }
+    ],
+    [
+        2,
+        {
+            "Postnummer": "2815",
+            "Areal": 255,
+            "Byggeaar": "Eldre enn 2007",
+            "Vannbaaren varme": "Ja",
+            "Type vannbaarent varmesystem": "Gulvvarme"
+        }
+    ],
+    [
+        3,
+        {
+            "Postnummer": "2815",
+            "Areal": 255,
+            "Byggeaar": "Eldre enn 2007",
+            "Vannbaaren varme": "Nei",
+            "Type vannbaarent varmesystem": "Gulvvarme"
+        }
     ]
 ]
