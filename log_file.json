@@ -1,0 +1,22 @@
+[
+    [
+        0,
+        {
+            "Postnummer": "2815",
+            "Areal": 255,
+            "Bygge\u00e5r": "F\u00f8r 2007",
+            "Vannb\u00e5ren varme": "Nei",
+            "Type vannb\u00e5rent varmesystem": "Gulvvarme"
+        }
+    ],
+    [
+        1,
+        {
+            "Postnummer": "2815",
+            "Areal": 255,
+            "Byggeaar": "Nyere enn 2007",
+            "Vannbaaren varme": "Ja",
+            "Type vannbaarent varmesystem": "Radiator"
+        }
+    ]
+]

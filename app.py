@@ -7,8 +7,8 @@ import base64
 import requests
 import mpu
 import plotly.express as px
+import json
 import math
-import logging
 from PIL import Image
 from GHEtool import Borefield, GroundData 
 from plotly import graph_objects as go
@@ -16,6 +16,8 @@ from PIL import Image
 from shapely.geometry import Point, shape
 from streamlit_searchbox import st_searchbox
 from streamlit_extras.no_default_selectbox import selectbox
+import os
+    
 
 def hour_to_month(hourly_array, aggregation='sum'):
     result_array = []
@@ -152,24 +154,30 @@ class Calculator:
             if 'log' not in st.session_state:
                 st.session_state['log'] = False
             if st.session_state["log"] == False:
-                try:
-                    log_data = {
-                        "postnummer": self.address_postcode,
-                        "areal": int(self.building_area),
-                        "byggeaar": self.building_age,
-                        "vannbaaren varme": self.waterborne_heat_option,
-                        "type vannbaarent varmesystem": self.selected_cop_option
-                    }
-                    file_path = "log_file.json"
-                    with open(file_path, "w") as json_file:
-                        json.dump(log_data, json_file, indent=None)
+                if self.building_age == "Før 2007":
+                    self.building_age = "Eldre enn 2007"
+                else:
+                    self.building_age = "Nyere enn 2007"
+                log_data = {
+                    "Postnummer": self.address_postcode,
+                    "Areal": int(self.building_area),
+                    "Byggeaar": self.building_age,
+                    "Vannbaaren varme": self.waterborne_heat_option,
+                    "Type vannbaarent varmesystem": self.selected_cop_option
+                }
 
-                    streamlit_root_logger = logging.getLogger(st.__name__)
-                    streamlit_root_logger.info(f"Ny registrering. Postnummer ({self.address_postcode}). Areal ({int(self.building_area)} m²). Byggeår ({self.building_age}). Vannbåren varme ({self.waterborne_heat_option}). Type vannbårent varmesystem ({self.selected_cop_option}).")
-                except:
-                    pass
+                file_path = 'log_file.json'
+                file_exists = os.path.exists(file_path)
+                if file_exists and os.path.getsize(file_path) > 0:
+                    with open(file_path, 'r') as file:
+                        existing_data = json.load(file)
+                else:
+                    existing_data = []
+                new_key = len(existing_data)
+                existing_data.append((new_key, log_data))
+                with open(file_path, 'w') as file:
+                    json.dump(existing_data, file, indent=4)
                 st.session_state["log"] = True
-            # initialize logging
         else:
             st.stop()
             
