@@ -116,7 +116,7 @@ class Calculator:
                     }}
 
             </style>""".format(
-            padding_top=1, padding_bottom=1
+            padding_top=2, padding_bottom=1
         ),
         unsafe_allow_html=True,
         )
