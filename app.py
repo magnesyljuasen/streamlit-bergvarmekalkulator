@@ -762,8 +762,7 @@ class Calculator:
         combined_cop = (space_heating) / (space_heating_sum)
         self.COMBINED_COP = float(st.number_input(
             "Årsvarmefaktor", 
-            help = """Varmefaktor eller COP (coeficcient of performance) beskriver ytelsen 
-            til varmepumper der og da. Årsvarmefaktoren er hvor effektivt en varmepumpe produserer varme i løpet av et år.""", 
+            help = """Årsvarmefaktoren (SCOP) er forholdet mellom avgitt varmeenergi fra varmepumpen og tilført strøm i løpet av et år.""", 
             value = float(combined_cop), step = 0.1, min_value = 2.0, max_value= 5.0))
 
     def __nettleie_energiledd(self, row):
