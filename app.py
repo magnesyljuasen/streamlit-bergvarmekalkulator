@@ -185,7 +185,7 @@ class Calculator:
             st.stop()
             
     def __streamlit_calculator_input(self):
-        st.header("Bergvarmekalkulatoren")
+        st.subheader("Bergvarmekalkulatoren")
         st.write("""Med bergvarmekalkulatoren kan du raskt 
                  beregne potensialet for å hente energi fra bakken 
                  til din bolig! Start med å skrive inn adresse i søkefeltet under.""")
