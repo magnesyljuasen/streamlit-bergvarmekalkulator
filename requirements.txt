@@ -105,7 +105,7 @@ toolz==0.12.1
 tornado==6.4
 typing_extensions==4.10.0
 tzdata==2024.1
-tzlocal==5.2
+tzlocal==4.3
 urllib3==2.2.1
 validators==0.23.2
 watchdog==4.0.0
