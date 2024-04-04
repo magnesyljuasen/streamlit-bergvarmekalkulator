@@ -94,7 +94,7 @@ streamlit-folium==0.18.0
 streamlit-image-coordinates==0.1.6
 streamlit-keyup==0.2.3
 streamlit-lottie==0.0.5
-streamlit-searchbox==0.0.4
+streamlit-searchbox==0.1.1
 streamlit-toggle-switch==1.0.2
 streamlit-vertical-slider==2.5.5
 tenacity==8.2.3
