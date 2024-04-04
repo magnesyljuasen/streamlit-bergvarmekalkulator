@@ -189,6 +189,7 @@ class Calculator:
         st.write("""Med bergvarmekalkulatoren kan du raskt 
                  beregne potensialet for å hente energi fra bakken 
                  til din bolig! Start med å skrive inn adresse i søkefeltet under.""")
+        st.text_input("Test")
         self.__streamlit_address_input()
         c1, c2 = st.columns(2)
         with c1:
